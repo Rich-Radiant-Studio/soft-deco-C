@@ -3,8 +3,10 @@
     <!-- Top Navigation Bar - Part 1 -->
     <div class="top-nav-bar">
       <div class="container-fluid px-4">
-        <div class="d-flex align-items-center justify-content-end gap-3">
-          <button class="btn btn-sm btn-register">{{ $t('nav.register') }}</button>
+        <div class="d-flex align-items-center justify-content-end" style="gap: 16px;">
+          <button class="btn btn-sm btn-register">
+            <i class="bi bi-person-plus-fill me-2"></i>{{ $t('nav.register') }}
+          </button>
           <LanguageSwitcher />
           <UserAvatar />
         </div>
@@ -61,17 +63,24 @@ const $t = (key: string) => i18n?.t(key) || key
 }
 
 .btn-register {
-  background: #00699A;
-  color: white;
+  background: transparent;
   border: none;
+  color: #FFFFFF;
   padding: clamp(4px, 0.6vw, 6px) clamp(12px, 1.5vw, 16px);
   border-radius: clamp(2px, 0.3vw, 4px);
-  font-size: clamp(13px, 1.2vw, 14px);
-  transition: background 0.2s;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+  letter-spacing: 0;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
 }
 
 .btn-register:hover {
-  background: #005580;
+  background: transparent;
+  color: #FFFFFF;
 }
 
 .main-header {

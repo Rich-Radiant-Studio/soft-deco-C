@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="user-avatar-section d-flex align-items-center gap-3">
     <!-- 未登录状态 -->
     <template v-if="!isAuthenticated">
@@ -14,22 +14,16 @@
     <template v-else>
       <div class="dropdown">
         <button 
-          class="btn btn-link p-0 d-flex align-items-center gap-2 text-decoration-none" 
+          class="btn btn-dark-custom p-0 d-flex align-items-center gap-2 text-decoration-none" 
           data-bs-toggle="dropdown"
           aria-expanded="false"
         >
-          <img 
-            :src="userAvatar" 
-            class="rounded-circle user-avatar" 
-            width="36" 
-            height="36" 
-            :alt="username"
-          >
-          <span class="text-dark">{{ username }}</span>
-          <i class="bi bi-chevron-down text-muted"></i>
+          <i class="bi bi-person-circle user-icon"></i>
+          <span class="username-text">{{ username }}</span>
+          <i class="bi bi-chevron-down chevron-icon"></i>
         </button>
         
-        <ul class="dropdown-menu dropdown-menu-end">
+        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
           <li>
             <router-link to="/profile" class="dropdown-item">
               <i class="bi bi-person me-2"></i>{{ $t('nav.profile') }}
@@ -49,7 +43,7 @@
             <hr class="dropdown-divider">
           </li>
           <li v-if="isGuest">
-            <a href="javascript:void(0)" @click.prevent="handleUpgrade" class="dropdown-item text-primary">
+            <a href="javascript:void(0)" @click.prevent="handleUpgrade" class="dropdown-item text-warning">
               <i class="bi bi-person-plus me-2"></i>{{ $t('nav.upgradeAccount') }}
             </a>
           </li>
@@ -185,6 +179,10 @@ onMounted(() => {
   background-color: #f97316;
   border-color: #f97316;
   color: white;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
 }
 
 .btn-orange:hover {
@@ -195,6 +193,10 @@ onMounted(() => {
 .btn-outline-orange {
   border-color: #f97316;
   color: #f97316;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
 }
 
 .btn-outline-orange:hover {
@@ -203,20 +205,91 @@ onMounted(() => {
   color: #f97316;
 }
 
-.dropdown-menu {
+.btn-dark-custom {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 0.25rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  line-height: 22px;
+  letter-spacing: 0;
+}
+
+.btn-dark-custom:hover {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+}
+
+.btn-dark-custom:focus {
+  box-shadow: none;
+}
+
+.user-icon {
+  font-size: 1.5rem;
+  color: #ffffff;
+}
+
+.username-text {
+  color: #ffffff;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  line-height: 22px;
+  letter-spacing: 0;
+}
+
+.chevron-icon {
+  font-size: 0.75rem;
+  color: #b0b0b0;
+}
+
+.dropdown-menu-dark {
+  background-color: #2d2d2d;
+  border: 1px solid #404040;
+  border-radius: 0.25rem;
+  padding: 0.5rem 0;
   min-width: 200px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.dropdown-item {
+.dropdown-menu-dark .dropdown-item {
+  color: #e0e0e0;
   padding: 0.5rem 1rem;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
 }
 
-.dropdown-item:hover {
-  background-color: #fff7ed;
+.dropdown-menu-dark .dropdown-item:hover {
+  background-color: #3d3d3d;
+  color: #ffffff;
 }
 
-.dropdown-item i {
+.dropdown-menu-dark .dropdown-item i {
   width: 20px;
+}
+
+.dropdown-menu-dark .dropdown-divider {
+  border-color: #404040;
+  margin: 0.5rem 0;
+}
+
+.dropdown-menu-dark .text-warning {
+  color: #fbbf24 !important;
+}
+
+.dropdown-menu-dark .text-warning:hover {
+  color: #f59e0b !important;
+}
+
+.dropdown-menu-dark .text-danger {
+  color: #ef4444 !important;
+}
+
+.dropdown-menu-dark .text-danger:hover {
+  color: #dc2626 !important;
 }
 </style>

@@ -6,6 +6,7 @@ import './assets/styles/global.css'
 import App from './App.vue'
 import router from './router'
 import { createI18nPlugin } from './plugins/i18n'
+import { autoLoginGuest } from './utils/guestAuth'
 
 console.log('user-web main.ts 开始执行')
 console.log('window.__POWERED_BY_WUJIE__:', (window as any).__POWERED_BY_WUJIE__)
@@ -76,6 +77,10 @@ if (isWujieEnv) {
 // 初始化默认语言
 const savedLocale = localStorage.getItem('user-web-locale') || 'zh'
 i18nPlugin.switchLocale(savedLocale)
+
+// 游客自动登录
+console.log('开始游客自动登录...')
+autoLoginGuest()
 
 console.log('user-web main.ts 执行完成')
 

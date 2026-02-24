@@ -32,6 +32,18 @@ const languages = {
       'nav.guest': '游客',
       'nav.upgradeAccount': '成为正式用户',
 
+      // 游客相关
+      'guest.welcome': '欢迎访问！',
+      'guest.autoLoginMessage': '我们已为您自动创建游客账号',
+      'guest.username': '用户名',
+      'guest.accountId': '账号ID',
+      'guest.noticeTitle': '游客账号说明',
+      'guest.notice1': '游客账号有效期为7天',
+      'guest.notice2': '可以浏览商品、添加购物车，但无法下单',
+      'guest.notice3': '升级为正式用户后可享受完整功能',
+      'guest.upgradeNow': '立即升级',
+      'guest.continueAsGuest': '继续浏览',
+
       // 面包屑
       'breadcrumb.cases': '案例展示',
 
@@ -239,6 +251,18 @@ const languages = {
       'nav.guest': 'Guest',
       'nav.upgradeAccount': 'Become a Full Member',
 
+      // Guest related
+      'guest.welcome': 'Welcome!',
+      'guest.autoLoginMessage': 'We have automatically created a guest account for you',
+      'guest.username': 'Username',
+      'guest.accountId': 'Account ID',
+      'guest.noticeTitle': 'Guest Account Notice',
+      'guest.notice1': 'Guest account is valid for 7 days',
+      'guest.notice2': 'You can browse products and add to cart, but cannot place orders',
+      'guest.notice3': 'Upgrade to a full account to enjoy all features',
+      'guest.upgradeNow': 'Upgrade Now',
+      'guest.continueAsGuest': 'Continue Browsing',
+
       // Breadcrumb
       'breadcrumb.cases': 'Cases',
 
@@ -440,6 +464,23 @@ const languages = {
       'nav.request': 'Enviar Solicitud',
       'nav.login': 'Iniciar Sesión',
       'nav.register': 'Registrarse',
+      'nav.profile': 'Perfil',
+      'nav.favorites': 'Mis Favoritos',
+      'nav.logout': 'Cerrar Sesión',
+      'nav.guest': 'Invitado',
+      'nav.upgradeAccount': 'Convertirse en Miembro Completo',
+
+      // Relacionado con invitados
+      'guest.welcome': '¡Bienvenido!',
+      'guest.autoLoginMessage': 'Hemos creado automáticamente una cuenta de invitado para ti',
+      'guest.username': 'Nombre de usuario',
+      'guest.accountId': 'ID de cuenta',
+      'guest.noticeTitle': 'Aviso de Cuenta de Invitado',
+      'guest.notice1': 'La cuenta de invitado es válida por 7 días',
+      'guest.notice2': 'Puedes navegar productos y agregar al carrito, pero no puedes realizar pedidos',
+      'guest.notice3': 'Actualiza a una cuenta completa para disfrutar de todas las funciones',
+      'guest.upgradeNow': 'Actualizar Ahora',
+      'guest.continueAsGuest': 'Continuar Navegando',
 
       // Breadcrumb
       'breadcrumb.cases': 'Casos',

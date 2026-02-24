@@ -1,6 +1,42 @@
 ﻿<template>
   <div class="home-page" :key="componentKey">
-    <Header />
+    <!-- Top Navigation Bar - Part 1 -->
+    <div class="top-nav-bar">
+      <div class="container-fluid px-4">
+        <div class="d-flex align-items-center justify-content-end gap-3">
+          <button class="btn btn-sm btn-register" @click="handleRegister"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-plus me-2" viewBox="0 0 16 16"><path d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H1s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/><path fill-rule="evenodd" d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5"/></svg>{{ $t('nav.register') }}</button>
+          <LanguageSwitcher />
+          <UserAvatar />
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Navigation Bar - Part 2 -->
+    <header class="main-header">
+      <div class="container-fluid px-4">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-4">
+            <a href="#" class="navbar-brand">LOGO</a>
+            <nav class="d-none d-md-flex align-items-center">
+              <router-link to="/" class="nav-link" exact active-class="active">{{ $t('nav.home') }}</router-link>
+              <router-link to="/shop" class="nav-link" active-class="active">{{ $t('nav.shop') }}</router-link>
+              <router-link to="/designers" class="nav-link" active-class="active">{{ $t('nav.designers') }}</router-link>
+              <router-link to="/community" class="nav-link" active-class="active">{{ $t('nav.community') }}</router-link>
+              <AboutUsDropdown />
+            </nav>
+          </div>
+          <div class="d-flex align-items-center gap-3">
+            <div class="position-relative">
+              <input type="text" class="form-control search-input" :placeholder="$t('home.search')">
+              <i class="bi bi-search search-icon"></i>
+            </div>
+            <router-link to="/cart" class="btn btn-icon">
+              <i class="bi bi-cart"></i>
+            </router-link>
+          </div>
+        </div>
+      </div>
+    </header>
 
     <!-- Main Content -->
     <div class="main-content-wrapper">
@@ -172,7 +208,7 @@
                   <!-- Top Left Tags -->
                   <div class="carousel-tags-left">
                     <span class="tag-primary">Modern Style</span>
-                    <span class="tag-secondary">120㎡</span>
+                    <span class="tag-secondary">120銕?/span>
                     <span class="tag-secondary">Whole House</span>
                     <span class="tag-secondary">All Designs</span>
                   </div>
@@ -192,7 +228,7 @@
                   
                   <!-- Bottom Center Content -->
                   <div class="carousel-caption-center">
-                    <h3 class="carousel-title">Modern Soft Decoration Design · Three-Bedroom Apartment</h3>
+                    <h3 class="carousel-title">Modern Soft Decoration Design 路 Three-Bedroom Apartment</h3>
                     <p class="carousel-desc">Selected soft decoration cases, professional design, quality assurance. Enjoy a comfortable and stylish home environment.</p>
                     <div class="carousel-buttons">
                       <button class="btn-carousel-secondary">Add to cart</button>
@@ -206,7 +242,7 @@
                   
                   <div class="carousel-tags-left">
                     <span class="tag-primary">Nordic Style</span>
-                    <span class="tag-secondary">90㎡</span>
+                    <span class="tag-secondary">90銕?/span>
                     <span class="tag-secondary">Bedroom</span>
                     <span class="tag-secondary">Recommended</span>
                   </div>
@@ -238,7 +274,7 @@
                   
                   <div class="carousel-tags-left">
                     <span class="tag-primary">Light Luxury</span>
-                    <span class="tag-secondary">150㎡</span>
+                    <span class="tag-secondary">150銕?/span>
                     <span class="tag-secondary">Kitchen</span>
                     <span class="tag-secondary">Popular</span>
                   </div>
@@ -256,7 +292,7 @@
                   </div>
                   
                   <div class="carousel-caption-center">
-                    <h3 class="carousel-title">Luxury Kitchen Design · Modern Living Space</h3>
+                    <h3 class="carousel-title">Luxury Kitchen Design 路 Modern Living Space</h3>
                     <p class="carousel-desc">High-end kitchen design with premium materials and elegant aesthetics for your dream home.</p>
                     <div class="carousel-buttons">
                       <button class="btn-carousel-secondary">Add to cart</button>
@@ -357,7 +393,7 @@
                     <p class="promo-more"><span class="text-highlight">More activities:</span><strong>Points redemption activity notification</strong></p>
                   </div>
                 </div>
-                <!-- 装饰图案 -->
+                <!-- 瑁呴グ鍥炬 -->
                 <div class="promo-decoration">
                   <img :src="couponImage" alt="decoration" class="promo-sprite-img" />
                 </div>
@@ -377,7 +413,7 @@
       <div class="container-fluid px-4 py-4">
         <div class="text-center">
           <p class="mb-2">{{ $t('common.copyright') }}</p>
-          <p class="mb-0">ICP备案号：京ICP备12345678号</p>
+          <p class="mb-0">ICP澶囨鍙凤細浜琁CP澶?2345678鍙?/p>
         </div>
       </div>
     </footer>
@@ -387,7 +423,9 @@
 <script setup lang="ts">
 import { ref, inject, onMounted, onBeforeUnmount, computed, getCurrentInstance } from 'vue'
 import { useRouter } from 'vue-router'
-import Header from '@/components/Header.vue'
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
+import UserAvatar from '@/components/UserAvatar.vue'
+import AboutUsDropdown from '@/components/AboutUsDropdown.vue'
 import FloatingActionButtons from '@/components/FloatingActionButtons.vue'
 import type { I18nPlugin } from '@/plugins/i18n'
 import spriteImage from '@/assets/images/sprites/sprite.png'
@@ -415,33 +453,33 @@ onMounted(() => {
     instance?.proxy?.$forceUpdate()
   })
 
-  // 监听滚动事件
+  // 鐩戝惉婊氬姩浜嬩欢
   window.addEventListener('scroll', handleScroll)
 })
 
-// 处理滚动事件
+// 澶勭悊婊氬姩浜嬩欢
 const handleScroll = () => {
   if (!sidebarRef.value || !sidebarContentRef.value) return
 
   const scrollTop = window.pageYOffset || document.documentElement.scrollTop
   const viewportHeight = window.innerHeight
-  const headerHeight = 104 // 顶部导航栏高度（40px + 64px）
+  const headerHeight = 104 // 椤堕儴瀵艰埅鏍忛珮搴︼紙40px + 64px锛?
 
-  // 获取侧边栏容器和内容的位置信息
+  // 鑾峰彇渚ц竟鏍忓鍣ㄥ拰鍐呭鐨勪綅缃俊鎭?
   const sidebarRect = sidebarRef.value.getBoundingClientRect()
   const sidebarTop = sidebarRect.top + scrollTop
   const sidebarBottom = sidebarRect.bottom + scrollTop
   const contentHeight = sidebarContentRef.value.scrollHeight
 
-  // 计算触发粘性的临界点（内容底部到达视口底部）
+  // 璁＄畻瑙﹀彂绮樻€х殑涓寸晫鐐癸紙鍐呭搴曢儴鍒拌揪瑙嗗彛搴曢儴锛?
   const triggerPoint = contentHeight - viewportHeight + sidebarTop + headerHeight
   
-  // 计算菜单栏应该停止固定的点（容器底部）
+  // 璁＄畻鑿滃崟鏍忓簲璇ュ仠姝㈠浐瀹氱殑鐐癸紙瀹瑰櫒搴曢儴锛?
   const stopPoint = sidebarBottom - viewportHeight + headerHeight
 
-  // 判断是否应该固定
+  // 鍒ゆ柇鏄惁搴旇鍥哄畾
   if (scrollTop >= triggerPoint && scrollTop < stopPoint) {
-    // 固定状态
+    // 鍥哄畾鐘舵€?
     if (!isSticky.value) {
       isSticky.value = true
       sidebarContentRef.value.style.position = 'fixed'
@@ -452,7 +490,7 @@ const handleScroll = () => {
       sidebarContentRef.value.classList.add('sticky-scrollable')
     }
   } else if (scrollTop >= stopPoint) {
-    // 到达容器底部，绝对定位在底部
+    // 鍒拌揪瀹瑰櫒搴曢儴锛岀粷瀵瑰畾浣嶅湪搴曢儴
     if (isSticky.value) {
       isSticky.value = false
     }
@@ -464,7 +502,7 @@ const handleScroll = () => {
     sidebarContentRef.value.style.zIndex = '99'
     sidebarContentRef.value.classList.add('sticky-scrollable')
   } else {
-    // 正常状态
+    // 姝ｅ父鐘舵€?
     if (isSticky.value) {
       isSticky.value = false
     }
@@ -478,7 +516,7 @@ const handleScroll = () => {
   }
 }
 
-// 清理事件监听器
+// 娓呯悊浜嬩欢鐩戝惉鍣?
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', handleScroll)
 })
@@ -539,14 +577,14 @@ const showAllButtons = ref(false)
 // Select room function
 const selectRoom = (room: string) => {
   selectedRoom.value = room
-  // 这里可以添加筛选逻辑，根据选中的房间类型过滤商品
+  // 杩欓噷鍙互娣诲姞绛涢€夐€昏緫锛屾牴鎹€変腑鐨勬埧闂寸被鍨嬭繃婊ゅ晢鍝?
   console.log('Selected room:', room)
 }
 
 // Select product tab function
 const selectTab = (tab: string) => {
   selectedTab.value = tab
-  // 这里可以添加筛选逻辑，根据选中的标签过滤商品
+  // 杩欓噷鍙互娣诲姞绛涢€夐€昏緫锛屾牴鎹€変腑鐨勬爣绛捐繃婊ゅ晢鍝?
   console.log('Selected tab:', tab)
 }
 
@@ -572,10 +610,10 @@ const buyNow = (product: any) => {
   // TODO: Implement buy now logic
 }
 
-// 导入统一的模拟数据
+// 瀵煎叆缁熶竴鐨勬ā鎷熸暟鎹?
 import { getAllProducts } from '@/data/mockData'
 
-// Product data - 使用统一数据源
+// Product data - 浣跨敤缁熶竴鏁版嵁婧?
 const baseProducts = getAllProducts()
 
 const products = computed(() => 
@@ -590,27 +628,124 @@ const products = computed(() =>
 </script>
 
 <style scoped>
-/* 页面整体最小宽度设置 */
+/* 椤甸潰鏁翠綋鏈€灏忓搴﹁缃?*/
 .home-page {
   min-width: 1200px;
   overflow-x: auto;
 }
 
+/* Top Navigation Bar - Part 1 */
+.top-nav-bar {
+  background: #333333;
+  color: white;
+  padding: 0.5rem 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1001;
+}
+
+.btn-register {
+  background: transparent;
+  border: 1px solid white;
+  color: white;
+  padding: 0.25rem 1rem;
+  border-radius: 0.25rem; /* 4px */
+  font-size: 0.875rem; /* 14px */
+}
+
+.btn-register:hover {
+  background: white;
+  color: #333333;
+}
+
+/* Main Header - Part 2 */
+.main-header {
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 1rem 0;
+  position: fixed;
+  top: 2.5rem; /* 40px */
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05); /* 0 2px 4px */
+  margin-bottom: 0;
+}
+
+.navbar-brand {
+  font-size: 1.5rem; /* 24px */
+  font-weight: 700;
+  color: #00699A;
+  text-decoration: none;
+}
+
+.nav-link {
+  color: #6b7280;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem; /* 15px */
+  transition: color 0.2s;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: #00699A;
+}
+
+.search-input {
+  width: 18.75rem; /* 300px */
+  padding-left: 2.5rem; /* 40px */
+  border: 1px solid #e5e7eb;
+  border-radius: 0.25rem; /* 4px */
+  font-size: 0.875rem; /* 14px */
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem; /* 12px */
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+
+.btn-icon {
+  width: 2.5rem; /* 40px */
+  height: 2.5rem; /* 40px */
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.25rem; /* 4px */
+  background: white;
+  color: #6b7280;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  background: #f9fafb;
+  color: #00699A;
+  border-color: #00699A;
+}
+
 /* Main Content */
 .main-content-wrapper {
-  margin-top: 0;
+  margin-top: 6.5rem; /* 璋冩暣涓虹揣璐村ご閮紝40px + 64px(header楂樺害) = 104px锛岀害6.5rem */
   padding: 0;
   width: 100%;
-  background: #F4F4F4; /* 整体背景色 */
-  min-width: 1200px; /* 设置最小宽度，防止过度挤压 */
-  overflow-x: auto; /* 小于最小宽度时允许横向滚动 */
+  background: #F4F4F4; /* 鏁翠綋鑳屾櫙鑹?*/
+  min-width: 1200px; /* 璁剧疆鏈€灏忓搴︼紝闃叉杩囧害鎸ゅ帇 */
+  overflow-x: auto; /* 灏忎簬鏈€灏忓搴︽椂鍏佽妯悜婊氬姩 */
 }
 
 .content-container {
   display: flex;
   width: 100%;
-  min-height: calc(100vh - 6.5rem); /* 调整为匹配新的margin-top */
-  background: #F4F4F4; /* 容器背景色 */
+  min-height: calc(100vh - 6.5rem); /* 璋冩暣涓哄尮閰嶆柊鐨刴argin-top */
+  background: #F4F4F4; /* 瀹瑰櫒鑳屾櫙鑹?*/
 }
 
 /* Sidebar Menu */
@@ -622,7 +757,7 @@ const products = computed(() =>
   min-height: 100%;
   flex-shrink: 0;
   box-sizing: border-box;
-  position: relative; /* 添加相对定位，让子元素的绝对定位相对于它 */
+  position: relative; /* 娣诲姞鐩稿瀹氫綅锛岃瀛愬厓绱犵殑缁濆瀹氫綅鐩稿浜庡畠 */
 }
 
 .sidebar-content {
@@ -637,12 +772,12 @@ const products = computed(() =>
   overflow-y: auto;
   overflow-x: hidden;
   max-height: calc(100vh - 6.5rem);
-  /* 隐藏滚动条但保持可滚动 */
+  /* 闅愯棌婊氬姩鏉′絾淇濇寔鍙粴鍔?*/
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
 }
 
-/* 隐藏 Webkit 浏览器的滚动条 */
+/* 闅愯棌 Webkit 娴忚鍣ㄧ殑婊氬姩鏉?*/
 .sidebar-content.sticky-scrollable::-webkit-scrollbar {
   display: none;
 }
@@ -725,7 +860,7 @@ const products = computed(() =>
 }
 
 .color-box.active::after {
-  content: '✓';
+  content: '鉁?;
   position: absolute;
   top: 50%;
   left: 50%;
@@ -739,9 +874,9 @@ const products = computed(() =>
 /* Content Area */
 .content-area {
   flex: 1;
-  min-width: 0; /* 防止flex子元素溢出 */
+  min-width: 0; /* 闃叉flex瀛愬厓绱犳孩鍑?*/
   padding: 0;
-  background: #F4F4F4; /* 右侧内容区背景色 */
+  background: #F4F4F4; /* 鍙充晶鍐呭鍖鸿儗鏅壊 */
   overflow-x: hidden;
   width: 100%;
   box-sizing: border-box;
@@ -751,7 +886,7 @@ const products = computed(() =>
 .room-nav {
   display: flex;
   align-items: center;
-  justify-content: center; /* 水平居中 */
+  justify-content: center; /* 姘村钩灞呬腑 */
   gap: 2rem; /* 32px */
   padding: 0 2rem; /* 0 top/bottom, 32px left/right */
   margin-bottom: 0;
@@ -760,7 +895,7 @@ const products = computed(() =>
   overflow-x: auto;
   overflow-y: hidden;
   white-space: nowrap;
-  background: #F4F4F4; /* 导航栏背景色 */
+  background: #F4F4F4; /* 瀵艰埅鏍忚儗鏅壊 */
 }
 
 .room-nav::-webkit-scrollbar {
@@ -784,7 +919,7 @@ const products = computed(() =>
   letter-spacing: 0;
   color: #333333;
   text-decoration: none;
-  padding-bottom: 0.5rem; /* 8px 为下划线留空间 */
+  padding-bottom: 0.5rem; /* 8px 涓轰笅鍒掔嚎鐣欑┖闂?*/
   border-bottom: none;
   transition: all 0.2s;
   flex-shrink: 0;
@@ -823,7 +958,7 @@ const products = computed(() =>
   overflow: hidden;
   box-shadow: none;
   margin-bottom: 0;
-  margin-top: 0; /* 移除顶部间距 */
+  margin-top: 0; /* 绉婚櫎椤堕儴闂磋窛 */
   position: relative;
 }
 
@@ -866,7 +1001,7 @@ const products = computed(() =>
   top: 1.5rem; /* 24px */
   right: 1.5rem; /* 24px */
   display: flex;
-  flex-direction: row; /* 水平并排展示 */
+  flex-direction: row; /* 姘村钩骞舵帓灞曠ず */
   gap: 0.625rem; /* 10px */
   z-index: 10;
 }
@@ -887,11 +1022,11 @@ const products = computed(() =>
 }
 
 .carousel-action-btn i {
-  color: #333333; /* 默认图标颜色 */
+  color: #333333; /* 榛樿鍥炬爣棰滆壊 */
   transition: color 0.3s;
 }
 
-/* 悬停按钮时图标颜色变化 */
+/* 鎮仠鎸夐挳鏃跺浘鏍囬鑹插彉鍖?*/
 .carousel-action-btn:hover {
   background: rgba(255, 255, 255, 1);
   transform: scale(1.1);
@@ -901,7 +1036,7 @@ const products = computed(() =>
   color: #00699A;
 }
 
-/* 激活状态（点击后）图标填充颜色 */
+/* 婵€娲荤姸鎬侊紙鐐瑰嚮鍚庯級鍥炬爣濉厖棰滆壊 */
 .carousel-action-btn.active i {
   color: #00699A;
 }
@@ -911,7 +1046,7 @@ const products = computed(() =>
   position: absolute;
   bottom: 3.625rem; /* 58px */
   left: 50%;
-  transform: translateX(-50%); /* 只水平居中 */
+  transform: translateX(-50%); /* 鍙按骞冲眳涓?*/
   text-align: center;
   z-index: 10;
   max-width: 87rem; /* 1392px */
@@ -958,7 +1093,7 @@ const products = computed(() =>
 
 .btn-carousel-secondary {
   padding: 0.625rem 1.5rem; /* 10px 24px */
-  background: transparent; /* 透明背景 */
+  background: transparent; /* 閫忔槑鑳屾櫙 */
   border: 1px solid white;
   color: #FFFFFF;
   border-radius: 0.25rem; /* 4px */
@@ -975,7 +1110,7 @@ const products = computed(() =>
 }
 
 .btn-carousel-secondary:hover {
-  background: rgba(255, 255, 255, 0.1); /* 悬停时轻微背景 */
+  background: rgba(255, 255, 255, 0.1); /* 鎮仠鏃惰交寰儗鏅?*/
   transform: translateY(-0.125rem); /* -2px */
 }
 
@@ -1056,7 +1191,7 @@ const products = computed(() =>
   width: 100%; /* Fill */
   height: auto; /* Hug content */
   padding: 1.5rem 0; /* 24px top/bottom, 0 left/right */
-  margin: 0; /* 去除外边距 */
+  margin: 0; /* 鍘婚櫎澶栬竟璺?*/
 }
 
 .tab-item {
@@ -1080,10 +1215,10 @@ const products = computed(() =>
 
 .tab-item.active {
   color: #333333;
-  font-weight: 400; /* 保持字重不变 */
+  font-weight: 400; /* 淇濇寔瀛楅噸涓嶅彉 */
 }
 
-/* 使用text-shadow模拟加粗效果，避免布局抖动 */
+/* 浣跨敤text-shadow妯℃嫙鍔犵矖鏁堟灉锛岄伩鍏嶅竷灞€鎶栧姩 */
 .tab-item.active {
   text-shadow: 0 0 0.3px #333333, 0 0 0.3px #333333;
 }
@@ -1091,7 +1226,7 @@ const products = computed(() =>
 .tab-item.active::after {
   content: '';
   position: absolute;
-  bottom: -0.625rem; /* -10px，向下偏移10px */
+  bottom: -0.625rem; /* -10px锛屽悜涓嬪亸绉?0px */
   left: 50%;
   transform: translateX(-50%);
   width: 2.25rem; /* 36px */
@@ -1105,8 +1240,8 @@ const products = computed(() =>
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem; /* 16px */
   padding: 1.5rem; /* 24px */
-  background: #FFFFFF; /* 白色背景 */
-  min-width: 0; /* 允许网格项收缩 */
+  background: #FFFFFF; /* 鐧借壊鑳屾櫙 */
+  min-width: 0; /* 鍏佽缃戞牸椤规敹缂?*/
 }
 
 .product-card-link {
@@ -1116,7 +1251,7 @@ const products = computed(() =>
 }
 
 .product-card {
-  min-width: 0; /* 允许卡片收缩 */
+  min-width: 0; /* 鍏佽鍗＄墖鏀剁缉 */
   background: white;
   border: 0.0625rem solid #E5E6E8; /* 1px */
   border-radius: 0.25rem; /* 4px */
@@ -1126,7 +1261,7 @@ const products = computed(() =>
   display: flex;
   flex-direction: column; /* Vertical */
   gap: 1rem; /* 16px */
-  width: 100%; /* 自适应容器宽度 */
+  width: 100%; /* 鑷€傚簲瀹瑰櫒瀹藉害 */
   height: auto; /* Hug content */
 }
 
@@ -1137,7 +1272,7 @@ const products = computed(() =>
 
 .product-image {
   position: relative;
-  width: 100%; /* 填满容器宽度 */
+  width: 100%; /* 濉弧瀹瑰櫒瀹藉害 */
   height: 20rem; /* 320px */
   overflow: hidden;
 }
@@ -1345,7 +1480,7 @@ const products = computed(() =>
 }
 
 .btn-add-cart:hover {
-  /* 移除背景色变化 */
+  /* 绉婚櫎鑳屾櫙鑹插彉鍖?*/
 }
 
 .btn-buy-now {
@@ -1381,7 +1516,7 @@ const products = computed(() =>
 }
 
 .btn-icon-favorite {
-  display: none; /* 隐藏星形按钮 */
+  display: none; /* 闅愯棌鏄熷舰鎸夐挳 */
 }
 
 /* Promotional Banner */
@@ -1389,14 +1524,14 @@ const products = computed(() =>
   grid-column: 1 / -1;
   background: linear-gradient(to bottom right, #F29265 0%, #8B2C00 30%, #8B2C00 100%);
   border-radius: 0.5rem; /* 8px */
-  overflow: hidden; /* 改回hidden */
+  overflow: hidden; /* 鏀瑰洖hidden */
   box-shadow: 0 0.25rem 0.75rem rgba(139, 44, 0, 0.3); /* 0 4px 12px */
-  width: 100%; /* 铺满容器 */
-  min-width: 0; /* 允许收缩 */
-  position: relative; /* 为装饰图案定位 */
+  width: 100%; /* 閾烘弧瀹瑰櫒 */
+  min-width: 0; /* 鍏佽鏀剁缉 */
+  position: relative; /* 涓鸿楗板浘妗堝畾浣?*/
 }
 
-/* 右侧装饰图案 - 使用雪碧图背景 */
+/* 鍙充晶瑁呴グ鍥炬 - 浣跨敤闆ⅶ鍥捐儗鏅?*/
 .promo-decoration {
   position: absolute;
   top: 0;
@@ -1418,19 +1553,19 @@ const products = computed(() =>
 
 .promo-content {
   position: relative;
-  z-index: 1; /* 确保内容在装饰图案下方 */
+  z-index: 1; /* 纭繚鍐呭鍦ㄨ楗板浘妗堜笅鏂?*/
   display: flex;
   align-items: center;
-  padding: clamp(1rem, 2vw, 1.5rem); /* 响应式内边距：最小16px，最大24px */
-  gap: clamp(0.5rem, 1.5vw, 1rem); /* 响应式间距：最小8px，最大16px */
-  min-width: 0; /* 允许收缩 */
+  padding: clamp(1rem, 2vw, 1.5rem); /* 鍝嶅簲寮忓唴杈硅窛锛氭渶灏?6px锛屾渶澶?4px */
+  gap: clamp(0.5rem, 1.5vw, 1rem); /* 鍝嶅簲寮忛棿璺濓細鏈€灏?px锛屾渶澶?6px */
+  min-width: 0; /* 鍏佽鏀剁缉 */
 }
 
 .promo-image {
   flex-shrink: 0;
-  width: clamp(300px, 40%, 34.6875rem); /* 响应式宽度：最小300px，最大555px */
-  min-width: 250px; /* 设置最小宽度，防止过度挤压 */
-  height: clamp(10rem, 15vw, 13.875rem); /* 响应式高度：最小160px，最大222px */
+  width: clamp(300px, 40%, 34.6875rem); /* 鍝嶅簲寮忓搴︼細鏈€灏?00px锛屾渶澶?55px */
+  min-width: 250px; /* 璁剧疆鏈€灏忓搴︼紝闃叉杩囧害鎸ゅ帇 */
+  height: clamp(10rem, 15vw, 13.875rem); /* 鍝嶅簲寮忛珮搴︼細鏈€灏?60px锛屾渶澶?22px */
   border-radius: 0.375rem; /* 6px */
   overflow: hidden;
 }
@@ -1444,13 +1579,13 @@ const products = computed(() =>
 .promo-text {
   flex: 1;
   color: white;
-  min-width: 0; /* 允许收缩 */
-  overflow: hidden; /* 防止内容溢出 */
+  min-width: 0; /* 鍏佽鏀剁缉 */
+  overflow: hidden; /* 闃叉鍐呭婧㈠嚭 */
 }
 
 .promo-text h4 {
   font-family: Inter, sans-serif;
-  font-size: clamp(1.5rem, 4vw, 3rem); /* 响应式字体：最小24px，最大48px */
+  font-size: clamp(1.5rem, 4vw, 3rem); /* 鍝嶅簲寮忓瓧浣擄細鏈€灏?4px锛屾渶澶?8px */
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: 0;
@@ -1458,12 +1593,12 @@ const products = computed(() =>
   margin-bottom: 0.75rem; /* 12px */
   display: flex;
   align-items: center; /* Vertical alignment: Middle */
-  word-wrap: break-word; /* 允许长单词换行 */
+  word-wrap: break-word; /* 鍏佽闀垮崟璇嶆崲琛?*/
 }
 
 .promo-highlight {
   font-family: Arial, sans-serif;
-  font-size: clamp(0.75rem, 1.5vw, 0.875rem); /* 响应式字体：最小12px，最大14px */
+  font-size: clamp(0.75rem, 1.5vw, 0.875rem); /* 鍝嶅簲寮忓瓧浣擄細鏈€灏?2px锛屾渶澶?4px */
   font-weight: 400;
   line-height: 1.5;
   letter-spacing: 0;
@@ -1481,24 +1616,24 @@ const products = computed(() =>
 .promo-howto,
 .promo-more {
   font-family: Inter, sans-serif;
-  font-size: clamp(0.75rem, 1.5vw, 0.875rem); /* 响应式字体：最小12px，最大14px */
+  font-size: clamp(0.75rem, 1.5vw, 0.875rem); /* 鍝嶅簲寮忓瓧浣擄細鏈€灏?2px锛屾渶澶?4px */
   font-weight: 400;
   line-height: 1.3;
   letter-spacing: 0;
   color: #FFFFFF;
-  margin-bottom: 0.75rem; /* 12px - 行间距 */
-  word-wrap: break-word; /* 允许长单词换行 */
-  display: block; /* 改为block，让内容自然排列 */
+  margin-bottom: 0.75rem; /* 12px - 琛岄棿璺?*/
+  word-wrap: break-word; /* 鍏佽闀垮崟璇嶆崲琛?*/
+  display: block; /* 鏀逛负block锛岃鍐呭鑷劧鎺掑垪 */
 }
 
 .promo-details:last-child,
 .promo-period:last-child,
 .promo-howto:last-child,
 .promo-more:last-child {
-  margin-bottom: 0; /* 最后一行不需要底部间距 */
+  margin-bottom: 0; /* 鏈€鍚庝竴琛屼笉闇€瑕佸簳閮ㄩ棿璺?*/
 }
 
-/* 具体内容文本（时间、优惠券等）使用加粗样式 */
+/* 鍏蜂綋鍐呭鏂囨湰锛堟椂闂淬€佷紭鎯犲埜绛夛級浣跨敤鍔犵矖鏍峰紡 */
 .promo-period strong,
 .promo-howto strong,
 .promo-more strong {
@@ -1508,7 +1643,7 @@ const products = computed(() =>
   line-height: 1.25rem; /* 20px */
   letter-spacing: 0;
   color: #FFFFFF;
-  margin-left: 0.75rem; /* 12px - 在strong标签前添加间距 */
+  margin-left: 0.75rem; /* 12px - 鍦╯trong鏍囩鍓嶆坊鍔犻棿璺?*/
 }
 
 .text-highlight {
@@ -1726,3 +1861,4 @@ const products = computed(() =>
   background: #000000;
 }
 </style>
+

@@ -1,10 +1,12 @@
 <template>
   <div id="app">
     <router-view />
+    <GuestWelcomeModal />
   </div>
 </template>
 
 <script setup lang="ts">
+import GuestWelcomeModal from './components/GuestWelcomeModal.vue'
 // C端用户系统 - 完全独立的应用
 </script>
 

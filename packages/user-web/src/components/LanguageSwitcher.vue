@@ -2,15 +2,14 @@
   <div class="language-switcher">
     <div class="dropdown">
       <button 
-        class="btn btn-outline-secondary btn-sm dropdown-toggle" 
+        class="btn btn-dark-custom btn-sm dropdown-toggle" 
         type="button" 
         data-bs-toggle="dropdown"
         :title="currentLanguage.name"
       >
-        <span class="flag">{{ currentLanguage.flag }}</span>
-        <span class="d-none d-md-inline ms-1">{{ currentLanguage.name }}</span>
+        <span>{{ currentLanguage.name }}</span>
       </button>
-      <ul class="dropdown-menu">
+      <ul class="dropdown-menu dropdown-menu-dark">
         <li v-for="locale in availableLocales" :key="locale">
           <a 
             class="dropdown-item" 
@@ -77,21 +76,54 @@ onMounted(() => {
   font-size: 1.1em;
 }
 
-.dropdown-item.active {
-  background-color: #f8f9fa;
+.btn-dark-custom {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  padding: 0.375rem 0.75rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+
+.btn-dark-custom:hover {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+}
+
+.btn-dark-custom:focus {
+  box-shadow: none;
+  outline: none;
+}
+
+.dropdown-menu-dark {
+  background-color: #2d2d2d;
+  border: 1px solid #404040;
+  border-radius: 0.25rem;
+  padding: 0.5rem 0;
+  min-width: 150px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-menu-dark .dropdown-item {
+  color: #e0e0e0;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.dropdown-menu-dark .dropdown-item:hover {
+  background-color: #3d3d3d;
+  color: #ffffff;
+}
+
+.dropdown-menu-dark .dropdown-item.active {
+  background-color: #f97316;
+  color: #ffffff;
   font-weight: 500;
-}
-
-.dropdown-item:hover {
-  background-color: #e9ecef;
-}
-
-.btn {
-  border: 1px solid #dee2e6;
-  background: white;
-}
-
-.btn:hover {
-  background-color: #f8f9fa;
 }
 </style>
