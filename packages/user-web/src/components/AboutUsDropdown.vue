@@ -197,16 +197,20 @@ onBeforeUnmount(() => {
 }
 
 .about-dropdown-wrapper .nav-link {
-  color: #6b7280;
+  color: #000000;
   text-decoration: none;
-  padding: 0.5rem 1rem;
-  font-size: 0.9375rem;
-  transition: color 0.2s;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+  white-space: nowrap;
+  position: relative;
+  padding: 4px 0;
+  text-align: center;
   display: inline-block;
 }
 
 .about-dropdown-wrapper .nav-link:hover {
-  color: #00699A;
+  color: #000000;
 }
 
 .dropdown-menu {

@@ -18,10 +18,15 @@ const languages = {
       // 导航
       'nav.home': '首页',
       'nav.shop': '商城',
+      'nav.singleProductMall': '单品商城',
       'nav.designers': '设计师',
+      'nav.designer': '设计师',
       'nav.community': '社区',
+      'nav.communityCenter': '社区中心',
       'nav.about': '关于我们',
-      'nav.cart': '购物车',
+      'nav.cart': 'Cart',
+      'nav.order': 'Order',
+      'nav.demand': 'Demand',
       'nav.orders': '我的订单',
       'nav.request': '提交需求',
       'nav.login': '登录',
@@ -31,6 +36,7 @@ const languages = {
       'nav.logout': '退出登录',
       'nav.guest': '游客',
       'nav.upgradeAccount': '成为正式用户',
+      'nav.searchPlaceholder': 'Input search text',
 
       // 游客相关
       'guest.welcome': '欢迎访问！',
@@ -237,10 +243,15 @@ const languages = {
       // Navigation
       'nav.home': 'Home',
       'nav.shop': 'Shop',
+      'nav.singleProductMall': 'Single Product Mall',
       'nav.designers': 'Designers',
+      'nav.designer': 'Designer',
       'nav.community': 'Community',
+      'nav.communityCenter': 'Community Center',
       'nav.about': 'About Us',
-      'nav.cart': 'Shopping Cart',
+      'nav.cart': 'Cart',
+      'nav.order': 'Order',
+      'nav.demand': 'Demand',
       'nav.orders': 'My Orders',
       'nav.request': 'Submit Request',
       'nav.login': 'Login',
@@ -250,6 +261,7 @@ const languages = {
       'nav.logout': 'Logout',
       'nav.guest': 'Guest',
       'nav.upgradeAccount': 'Become a Full Member',
+      'nav.searchPlaceholder': 'Input search text',
 
       // Guest related
       'guest.welcome': 'Welcome!',
@@ -456,10 +468,15 @@ const languages = {
       // Navegación
       'nav.home': 'Inicio',
       'nav.shop': 'Tienda',
+      'nav.singleProductMall': 'Centro Comercial de Producto Único',
       'nav.designers': 'Diseñadores',
+      'nav.designer': 'Diseñador',
       'nav.community': 'Comunidad',
+      'nav.communityCenter': 'Centro Comunitario',
       'nav.about': 'Acerca de',
       'nav.cart': 'Carrito',
+      'nav.order': 'Pedido',
+      'nav.demand': 'Demanda',
       'nav.orders': 'Mis Pedidos',
       'nav.request': 'Enviar Solicitud',
       'nav.login': 'Iniciar Sesión',
@@ -469,6 +486,7 @@ const languages = {
       'nav.logout': 'Cerrar Sesión',
       'nav.guest': 'Invitado',
       'nav.upgradeAccount': 'Convertirse en Miembro Completo',
+      'nav.searchPlaceholder': 'Ingrese texto de búsqueda',
 
       // Relacionado con invitados
       'guest.welcome': '¡Bienvenido!',

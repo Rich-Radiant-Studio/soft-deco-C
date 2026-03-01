@@ -35,19 +35,15 @@ import type { I18nPlugin } from '@/plugins/i18n'
 const i18n = inject<I18nPlugin>('i18n')
 const $t = (key: string) => i18n?.t(key) || key
 
-const isMicroFrontend = computed(() => !!(window as any).__POWERED_BY_WUJIE__)
-
 const windowInfo = computed(() => {
   return {
     location: window.location.href,
-    userAgent: navigator.userAgent.substring(0, 50) + '...',
-    wujie: !!(window as any).__POWERED_BY_WUJIE__
+    userAgent: navigator.userAgent.substring(0, 50) + '...'
   }
 })
 
 onMounted(() => {
   console.log('HomeTest.vue 挂载完成')
-  console.log('微前端环境:', isMicroFrontend.value)
   console.log('窗口信息:', windowInfo.value)
 })
 </script>

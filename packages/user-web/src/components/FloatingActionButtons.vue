@@ -53,11 +53,11 @@ const scrollToTop = () => {
 }
 
 .floating-btn {
-  width: clamp(48px, 3.75vw, 72px);
-  height: clamp(48px, 3.75vw, 72px);
-  min-width: clamp(48px, 3.75vw, 72px);
-  min-height: clamp(48px, 3.75vw, 72px);
-  border-radius: clamp(24px, 2.11vw, 40.5px);
+  width: clamp(38px, 3.23vw, 62px);
+  height: clamp(38px, 3.23vw, 62px);
+  min-width: clamp(38px, 3.23vw, 62px);
+  min-height: clamp(38px, 3.23vw, 62px);
+  border-radius: clamp(19px, 1.61vw, 31px);
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
   display: flex;
@@ -66,17 +66,17 @@ const scrollToTop = () => {
   cursor: pointer;
   transition: all 0.3s;
   box-shadow: 0 clamp(1px, 0.1vw, 2px) clamp(4px, 0.42vw, 8px) rgba(0, 0, 0, 0.15);
-  padding: clamp(12px, 0.94vw, 18px);
+  padding: clamp(9px, 0.73vw, 14px);
   margin: 0;
   flex-shrink: 0;
 }
 
 .floating-btn i {
-  font-size: clamp(24px, 1.875vw, 36px);
+  font-size: clamp(14px, 1.35vw, 26px);
   color: #00699A;
   transition: color 0.3s;
-  width: clamp(24px, 1.875vw, 36px);
-  height: clamp(24px, 1.875vw, 36px);
+  width: clamp(14px, 1.35vw, 26px);
+  height: clamp(14px, 1.35vw, 26px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -89,8 +89,8 @@ const scrollToTop = () => {
 }
 
 .floating-btn .back-to-top-icon {
-  width: clamp(24px, 1.875vw, 36px);
-  height: clamp(24px, 1.875vw, 36px);
+  width: clamp(14px, 1.35vw, 26px);
+  height: clamp(14px, 1.35vw, 26px);
   color: #FFFFFF;
   transition: color 0.3s;
   display: block;
@@ -126,14 +126,14 @@ const scrollToTop = () => {
   }
   
   .floating-btn {
-    width: clamp(40px, 6.25vw, 48px);
-    height: clamp(40px, 6.25vw, 48px);
-    min-width: clamp(40px, 6.25vw, 48px);
-    min-height: clamp(40px, 6.25vw, 48px);
+    width: clamp(30px, 5.21vw, 38px);
+    height: clamp(30px, 5.21vw, 38px);
+    min-width: clamp(30px, 5.21vw, 38px);
+    min-height: clamp(30px, 5.21vw, 38px);
   }
   
   .floating-btn i {
-    font-size: clamp(16px, 2.34vw, 18px);
+    font-size: clamp(12px, 1.56vw, 14px);
   }
 }
 </style>

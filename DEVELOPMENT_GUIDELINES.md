@@ -153,6 +153,57 @@
 - 保持代码风格一致
 - 文档必须及时更新
 
+## 11. 响应式设计规范 ⭐ 重要
+
+### 核心原则：所有尺寸必须动态计算
+
+#### ✅ 必须遵守：
+- **禁止使用固定像素值**（除了 1px, 2px 等极小值）
+- 所有尺寸基于当前分辨率动态计算
+- 使用相对单位：`rem`, `em`, `%`, `vw`, `vh`, `clamp()`
+- 使用 CSS 变量统一管理尺寸
+- 使用媒体查询实现断点响应
+
+#### 推荐方案：
+
+```css
+/* ✅ 好的做法 */
+.container {
+  width: clamp(320px, 80vw, 1200px);  /* 响应式宽度 */
+  padding: var(--spacing-lg);          /* CSS 变量 */
+  font-size: var(--font-base);         /* CSS 变量 */
+  gap: clamp(16px, 2vw, 32px);        /* 响应式间距 */
+}
+
+/* ❌ 不好的做法 */
+.container {
+  width: 800px;      /* 固定宽度 */
+  padding: 20px;     /* 固定间距 */
+  font-size: 16px;   /* 固定字体 */
+}
+```
+
+#### 工具使用：
+
+```typescript
+// 使用 Composable
+import { useResponsive } from '@/composables/useResponsive';
+
+const r = useResponsive();
+const cardWidth = r.value.clamp(400, 280, 500);
+
+// 使用工具函数
+import { vw, vh, clamp } from '@/utils/responsive';
+
+const width = vw(800);  // "41.67vw"
+const height = clamp(600, 400, 800); // "clamp(400px, 31.25vw, 800px)"
+```
+
+#### 详细文档：
+参考 `RESPONSIVE_DESIGN_GUIDE.md` 获取完整的响应式设计指南。
+
+---
+
 ## 总结
 
 **记住：作为保守的高级工程师，我们的目标是：**
@@ -160,7 +211,8 @@
 > "让代码库保持稳定、可预测、易维护。  
 > 不追求完美，追求可靠。  
 > 不追求创新，追求稳定。  
-> 最小化改动，最大化价值。"
+> 最小化改动，最大化价值。  
+> 所有尺寸动态计算，完美响应式。"
 
 ---
 
@@ -168,5 +220,6 @@
 - 每次改动前问自己：这个改动真的必要吗？
 - 每次添加代码前问自己：能否用现有代码实现？
 - 每次引入依赖前问自己：是否有更简单的方案？
+- 每次写尺寸前问自己：这个尺寸是响应式的吗？
 
 **如果答案是"不确定"，那就不要做。**

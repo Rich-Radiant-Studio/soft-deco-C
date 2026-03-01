@@ -1,0 +1,70 @@
+# 依赖目录
+node_modules/
+**/node_modules/
+package-lock.json
+
+# 构建产物
+dist/
+dist-ssr/
+build/
+**/dist/
+**/build/
+
+# 部署文件夹
+gh-pages-deploy/
+
+# 日志文件
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 编辑器和 IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+
+# 系统文件
+Thumbs.db
+.DS_Store
+*.swp
+*.swo
+*~
+
+# 环境变量文件
+.env
+.env.local
+.env.*.local
+.env.production
+
+# 临时文件
+*.tmp
+*.temp
+.cache/
+.temp/
+
+# 可执行文件和压缩包
+*.exe
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# 测试覆盖率
+coverage/
+*.lcov
+.nyc_output/
+
+# 其他
+.turbo/
+.vercel/
+.netlify/

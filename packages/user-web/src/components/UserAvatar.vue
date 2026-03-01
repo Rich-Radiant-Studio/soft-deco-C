@@ -101,24 +101,17 @@ const $t = (key: string) => {
 
 // 初始化用户信息
 const initUserInfo = () => {
-  // 从 window 对象获取父应用传递的用户信息
-  if ((window as any).__PARENT_APP__) {
-    parentUserInfo.value = (window as any).__PARENT_APP__.userInfo
-    isAuthenticated.value = !!(window as any).__PARENT_APP__.token
-    isGuest.value = parentUserInfo.value?.isGuest || false
-  } else {
-    // 从 localStorage 获取
-    const token = localStorage.getItem('token')
-    const userInfoStr = localStorage.getItem('userInfo')
-    
-    if (token && userInfoStr) {
-      try {
-        parentUserInfo.value = JSON.parse(userInfoStr)
-        isAuthenticated.value = true
-        isGuest.value = parentUserInfo.value?.isGuest || false
-      } catch (e) {
-        console.error('Failed to parse user info:', e)
-      }
+  // 从 localStorage 获取
+  const token = localStorage.getItem('token')
+  const userInfoStr = localStorage.getItem('userInfo')
+  
+  if (token && userInfoStr) {
+    try {
+      parentUserInfo.value = JSON.parse(userInfoStr)
+      isAuthenticated.value = true
+      isGuest.value = parentUserInfo.value?.isGuest || false
+    } catch (e) {
+      console.error('Failed to parse user info:', e)
     }
   }
 }
