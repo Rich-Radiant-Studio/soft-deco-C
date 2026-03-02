@@ -148,16 +148,19 @@
                 </div>
                 <div class="detail-row save-together">
                   <span>Save together</span>
-                  <a href="#" class="view-discount">View discount details</a>
+                  <div class="save-together-right">
+                    <a href="#" class="view-discount">View discount details</a>
+                    <span class="save-amount">$68</span>
+                  </div>
                 </div>
                 <div class="detail-row total">
                   <span>Total payable amount</span>
                   <span class="total-amount">${{ totalAmount }}</span>
                 </div>
                 <div class="guarantees">
-                  <p>√100%Genuine Product Guarantee</p>
-                  <p>√7-day unconditional return and exchange</p>
-                  <p>√Multiple payment methods</p>
+                  <p>100%Genuine Product Guarantee</p>
+                  <p>7-day unconditional return and exchange</p>
+                  <p>Multiple payment methods</p>
                 </div>
               </div>
             </div>
@@ -167,30 +170,46 @@
               <h2 class="module-title">Billing Address</h2>
               <div class="address-form">
                 <div class="form-row">
-                  <input type="text" placeholder="*Name" class="form-input">
-                  <input type="text" placeholder="*Surname" class="form-input">
+                  <div class="form-input-wrapper">
+                    <input type="text" placeholder="Name" class="form-input">
+                  </div>
+                  <div class="form-input-wrapper">
+                    <input type="text" placeholder="Surname" class="form-input">
+                  </div>
                 </div>
                 <div class="form-row">
-                  <select class="form-input full-width">
-                    <option>*Street</option>
-                  </select>
+                  <div class="form-input-wrapper full-width">
+                    <select class="form-input full-width">
+                      <option>Street</option>
+                    </select>
+                  </div>
                 </div>
                 <div class="form-row">
-                  <input type="text" placeholder="*Address" class="form-input full-width">
+                  <div class="form-input-wrapper full-width">
+                    <input type="text" placeholder="Address" class="form-input full-width">
+                  </div>
                 </div>
                 <div class="form-row">
-                  <select class="form-input">
-                    <option>*City</option>
-                  </select>
-                  <select class="form-input">
-                    <option>*State</option>
-                  </select>
+                  <div class="form-input-wrapper">
+                    <select class="form-input">
+                      <option>City</option>
+                    </select>
+                  </div>
+                  <div class="form-input-wrapper">
+                    <select class="form-input">
+                      <option>State</option>
+                    </select>
+                  </div>
                 </div>
                 <div class="form-row">
-                  <input type="text" placeholder="*Postal code" class="form-input">
-                  <select class="form-input">
-                    <option>*Country</option>
-                  </select>
+                  <div class="form-input-wrapper">
+                    <input type="text" placeholder="Postal code" class="form-input">
+                  </div>
+                  <div class="form-input-wrapper">
+                    <select class="form-input">
+                      <option>Country</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
@@ -199,43 +218,61 @@
             <div class="cart-module">
               <div class="module-header">
                 <h2 class="module-title">Receiving address</h2>
-                <label class="same-address">
-                  <input type="checkbox" v-model="sameAsBilling">
-                  Same as billing address
-                </label>
+                <div class="same-address">
+                  <BFormCheckbox v-model="sameAsBilling">
+                    Same as billing address
+                  </BFormCheckbox>
+                </div>
               </div>
               <div class="address-form">
                 <div class="form-row">
-                  <input type="text" placeholder="*Name" class="form-input">
-                  <input type="text" placeholder="*Surname" class="form-input">
+                  <div class="form-input-wrapper">
+                    <input type="text" placeholder="Name" class="form-input">
+                  </div>
+                  <div class="form-input-wrapper">
+                    <input type="text" placeholder="Surname" class="form-input">
+                  </div>
                 </div>
                 <div class="form-row">
-                  <select class="form-input full-width">
-                    <option>*Street</option>
-                  </select>
+                  <div class="form-input-wrapper full-width">
+                    <select class="form-input full-width">
+                      <option>Street</option>
+                    </select>
+                  </div>
                 </div>
                 <div class="form-row">
-                  <input type="text" placeholder="*Address" class="form-input full-width">
+                  <div class="form-input-wrapper full-width">
+                    <input type="text" placeholder="Address" class="form-input full-width">
+                  </div>
                 </div>
                 <div class="form-row">
-                  <select class="form-input">
-                    <option>*City</option>
-                  </select>
-                  <select class="form-input">
-                    <option>*State</option>
-                  </select>
+                  <div class="form-input-wrapper">
+                    <select class="form-input">
+                      <option>City</option>
+                    </select>
+                  </div>
+                  <div class="form-input-wrapper">
+                    <select class="form-input">
+                      <option>State</option>
+                    </select>
+                  </div>
                 </div>
                 <div class="form-row">
-                  <input type="text" placeholder="*Postal code" class="form-input">
-                  <select class="form-input">
-                    <option>*Country</option>
-                  </select>
+                  <div class="form-input-wrapper">
+                    <input type="text" placeholder="Postal code" class="form-input">
+                  </div>
+                  <div class="form-input-wrapper">
+                    <select class="form-input">
+                      <option>Country</option>
+                    </select>
+                  </div>
                 </div>
                 <div class="form-row">
-                  <label class="checkbox-label">
-                    <input type="checkbox">
-                    Not the construction site
-                  </label>
+                  <div class="checkbox-label">
+                    <BFormCheckbox>
+                      Not the construction site
+                    </BFormCheckbox>
+                  </div>
                 </div>
               </div>
               <button class="save-btn">Save</button>
@@ -354,7 +391,7 @@ const removeItem = (id: number) => {
 
 .cart-layout {
   display: grid;
-  grid-template-columns: 1fr clamp(350px, 20.83vw, 400px);
+  grid-template-columns: 1fr clamp(450px, 27.81vw, 534px);
   gap: clamp(12px, 0.83vw, 16px);
   align-items: stretch;
 }
@@ -769,7 +806,7 @@ const removeItem = (id: number) => {
 .payment-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: clamp(8px, 0.63vw, 12px);
   margin-bottom: 16px;
 }
 
@@ -782,6 +819,10 @@ const removeItem = (id: number) => {
 .form-input-wrapper {
   flex: 0 0 calc(50% - 6px);
   position: relative;
+}
+
+.form-input-wrapper.full-width {
+  flex: 0 0 100%;
 }
 
 .form-input-wrapper::before {
@@ -803,16 +844,26 @@ const removeItem = (id: number) => {
   border: 1px solid #E5E7EB;
   border-radius: clamp(3px, 0.21vw, 4px);
   font-family: 'Inter', sans-serif;
-  font-size: 14px;
+  font-size: clamp(12px, 0.73vw, 14px);
   font-weight: 400;
   font-style: normal;
-  line-height: 22px;
+  line-height: clamp(18px, 1.15vw, 22px);
   letter-spacing: 0;
   color: #5C5C5C;
   box-sizing: border-box;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: #E5E7EB;
+  outline: none;
 }
 
 .form-input::placeholder {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(12px, 0.73vw, 14px);
+  font-weight: 400;
+  line-height: clamp(18px, 1.15vw, 22px);
   color: #5C5C5C;
 }
 
@@ -849,8 +900,13 @@ const removeItem = (id: number) => {
 
 .security-note {
   text-align: center;
-  font-size: 12px;
-  color: #999999;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(12px, 0.73vw, 14px);
+  font-weight: 400;
+  font-style: normal;
+  line-height: clamp(18px, 1.15vw, 22px);
+  letter-spacing: 0;
+  color: #5C5C5C;
   margin: 0;
 }
 
@@ -858,51 +914,113 @@ const removeItem = (id: number) => {
 .order-details {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: clamp(12px, 0.83vw, 16px);
 }
 
 .detail-row {
   display: flex;
   justify-content: space-between;
-  font-size: 14px;
-  color: #333333;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(12px, 0.73vw, 14px);
+  font-weight: 400;
+  font-style: normal;
+  line-height: clamp(18px, 1.15vw, 22px);
+  letter-spacing: 0;
+  color: #5C5C5C;
+}
+
+.detail-row > span:last-child {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(12px, 0.73vw, 14px);
+  font-weight: 700;
+  line-height: clamp(18px, 1.15vw, 22px);
+  text-align: right;
+  color: #000000;
+  opacity: 0.9;
+}
+
+.detail-row > span.discount {
+  color: #00699A;
+  opacity: 1;
+}
+
+.detail-row.total > span.total-amount {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(14px, 0.83vw, 16px);
+  font-weight: 700;
+  line-height: clamp(18px, 1.04vw, 20px);
+  color: #8B2C00;
+  opacity: 1;
 }
 
 .detail-row.save-together {
-  padding-top: 12px;
-  border-top: 1px solid #E5E7EB;
+  padding-top: 0;
+  border-top: none;
+}
+
+.save-together-right {
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, 0.42vw, 8px);
+}
+
+.save-amount {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(12px, 0.73vw, 14px);
+  font-weight: 700;
+  font-style: normal;
+  line-height: clamp(18px, 1.15vw, 22px);
+  letter-spacing: 0;
+  color: #000000;
+  opacity: 0.9;
+  text-align: right;
 }
 
 .detail-row.total {
-  padding-top: 12px;
-  border-top: 1px solid #E5E7EB;
-  font-weight: 600;
-}
-
-.discount {
-  color: #FF4D4F;
+  padding-top: 0;
+  border-top: none;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(14px, 0.83vw, 16px);
+  font-weight: 700;
+  line-height: clamp(18px, 1.04vw, 20px);
+  color: #333333;
 }
 
 .view-discount {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(12px, 0.73vw, 14px);
+  font-weight: 400;
+  font-style: normal;
+  line-height: clamp(18px, 1.15vw, 22px);
+  letter-spacing: 0;
   color: #00699A;
   text-decoration: none;
-  font-size: 12px;
-}
-
-.total-amount {
-  color: #8B2C00;
-  font-size: 18px;
+  text-align: right;
 }
 
 .guarantees {
-  padding-top: 12px;
+  padding-top: clamp(14px, 0.83vw, 16px);
   border-top: 1px solid #E5E7EB;
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(6px, 0.42vw, 8px);
 }
 
 .guarantees p {
-  font-size: 12px;
-  color: #666666;
-  margin: 4px 0;
+  font-family: 'Arial', sans-serif;
+  font-size: clamp(12px, 0.73vw, 14px);
+  font-weight: 400;
+  line-height: clamp(18px, 1.15vw, 22px);
+  color: #1D2129;
+  margin: 0;
+  padding: 1px clamp(6px, 0.42vw, 8px);
+  background: transparent;
+  border: 1px solid #E5E6EB;
+  border-radius: clamp(3px, 0.21vw, 4px);
+  white-space: nowrap;
+  height: clamp(22px, 1.25vw, 24px);
+  display: flex;
+  align-items: center;
 }
 
 /* Address Forms */
@@ -914,32 +1032,84 @@ const removeItem = (id: number) => {
 }
 
 .same-address {
-  font-size: clamp(12px, 0.73vw, 14px);
-  color: #666666;
   display: flex;
   align-items: center;
-  gap: clamp(6px, 0.42vw, 8px);
+}
+
+.same-address :deep(.form-check) {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.same-address :deep(.form-check-input) {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.same-address :deep(.form-check-label) {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(12px, 0.73vw, 14px);
+  font-weight: 400;
+  line-height: clamp(18px, 1.15vw, 22px);
+  color: #000000;
+  opacity: 0.9;
+  cursor: pointer;
+  margin: 0;
+  padding-left: clamp(6px, 0.42vw, 8px);
+  display: flex;
+  align-items: center;
 }
 
 .checkbox-label {
-  font-size: clamp(12px, 0.73vw, 14px);
-  color: #666666;
   display: flex;
   align-items: center;
-  gap: clamp(6px, 0.42vw, 8px);
+}
+
+.checkbox-label :deep(.form-check) {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-label :deep(.form-check-input) {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.checkbox-label :deep(.form-check-label) {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(12px, 0.73vw, 14px);
+  font-weight: 400;
+  line-height: clamp(18px, 1.15vw, 22px);
+  color: #000000;
+  opacity: 0.9;
+  cursor: pointer;
+  margin: 0;
+  padding-left: clamp(6px, 0.42vw, 8px);
+  display: flex;
+  align-items: center;
 }
 
 .save-btn {
   width: 100%;
-  padding: clamp(10px, 0.63vw, 12px);
+  height: clamp(44px, 2.5vw, 48px);
+  padding: clamp(8px, 0.52vw, 10px) clamp(20px, 1.25vw, 24px);
   background: #333333;
-  color: white;
+  color: #FFFFFF;
   border: none;
   border-radius: clamp(3px, 0.21vw, 4px);
-  font-size: clamp(12px, 0.73vw, 14px);
-  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(20px, 1.25vw, 24px);
+  font-weight: 400;
+  line-height: clamp(24px, 1.46vw, 28px);
   cursor: pointer;
-  margin-top: auto;
+  margin-top: clamp(20px, 1.25vw, 24px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @media (max-width: 1200px) {
