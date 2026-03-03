@@ -43,6 +43,11 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '购物车' }
   },
   {
+    path: '/payment-success',
+    component: () => import('@/views/PaymentSuccess.vue'),
+    meta: { title: '支付成功' }
+  },
+  {
     path: '/profile',
     component: () => import('@/views/Profile.vue'),
     meta: { title: '个人中心' }

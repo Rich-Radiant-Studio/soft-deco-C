@@ -21,7 +21,7 @@ const $t = (key: string) => i18n?.t(key) || key
 .site-footer {
   background: #3C3C3C;
   color: white;
-  margin-top: 3rem;
+  margin-top: 0;
 }
 
 .site-footer p {
