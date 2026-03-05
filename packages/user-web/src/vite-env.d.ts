@@ -6,4 +6,9 @@ declare module '*.vue' {
   export default component
 }
 
+declare module 'virtual:svg-icons-register' {
+  const register: () => void
+  export default register
+}
+
 export {}

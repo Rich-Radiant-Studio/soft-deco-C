@@ -1,14 +1,28 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
+import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
+import path from 'path'
 
 export default defineConfig({
   base: '/',
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    createSvgIconsPlugin({
+      // 指定需要缓存的图标文件夹
+      iconDirs: [path.resolve(process.cwd(), 'src/assets/icons')],
+      // 指定symbolId格式
+      symbolId: 'icon-[name]',
+    })
+  ],
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src')
     }
+  },
+  optimizeDeps: {
+    include: ['bootstrap-vue-next', '@vueuse/core', 'vue3-datepicker'],
+    exclude: []
   },
   server: {
     port: 8084,

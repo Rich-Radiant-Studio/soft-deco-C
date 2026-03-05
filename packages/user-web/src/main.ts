@@ -2,13 +2,16 @@ import { createApp } from 'vue'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import 'bootstrap-icons/font/bootstrap-icons.css'
-import { createBootstrap } from 'bootstrap-vue-next'
 import 'bootstrap-vue-next/dist/bootstrap-vue-next.css'
 import './assets/styles/global.css'
 import App from './App.vue'
 import router from './router'
 import { createI18nPlugin } from './plugins/i18n'
 import { autoLoginGuest } from './utils/guestAuth'
+import SvgIcon from './components/SvgIcon.vue'
+
+// 导入 SVG 图标注册
+import 'virtual:svg-icons-register'
 
 console.log('user-web 应用启动')
 
@@ -16,9 +19,10 @@ console.log('user-web 应用启动')
 const i18nPlugin = createI18nPlugin()
 
 const app = createApp(App)
+app.component('SvgIcon', SvgIcon)
 app.use(router)
 app.use(i18nPlugin)
-app.use(createBootstrap()) // 添加BootstrapVue 3
+// 移除全局注册，改为按需引入组件
 
 // 在开发环境中暴露 router 到 window 对象，方便调试
 if (import.meta.env.DEV) {

@@ -48,6 +48,11 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '支付成功' }
   },
   {
+    path: '/payment-failed',
+    component: () => import('@/views/PaymentFailed.vue'),
+    meta: { title: '支付失败' }
+  },
+  {
     path: '/profile',
     component: () => import('@/views/Profile.vue'),
     meta: { title: '个人中心' }
@@ -64,7 +69,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/post-demand',
-    component: () => import('@/views/Profile.vue'),
+    component: () => import('@/views/CreateDesignRequest.vue'),
     meta: { title: '提交需求' }
   },
 

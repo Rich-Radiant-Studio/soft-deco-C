@@ -644,10 +644,9 @@ const handlePayNow = () => {
     localStorage.setItem('savedPaymentMethods', JSON.stringify(paymentDataToSave))
   }
   
-  // 立即跳转到支付成功页面
-  window.location.href = '/payment-success'
+  // 跳转到支付失败页面（用于测试）
+  window.location.href = '/payment-failed'
 }
-
 const cancelPaymentForm = () => {
   showPaymentForm.value = false
   paymentForm.value = {
