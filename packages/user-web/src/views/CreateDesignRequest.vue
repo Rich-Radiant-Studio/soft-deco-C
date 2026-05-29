@@ -74,8 +74,8 @@
                       <div v-if="files.length === 0" class="upload-placeholder">
                         <SvgIcon name="plus" size="clamp(16px, 1.25vw, 24px)" />
                         <div class="upload-text-group">
-                          <p class="upload-text">Click to upload</p>
-                          <p class="upload-hint">Drag and drop your file here, and the max size will be allowed 10MB</p>
+                          <p class="upload-text">Click or drag the file to upload here</p>
+                          <p class="upload-hint">Only pdf, png, jpg can be uploaded, and the size does not exceed 100MB</p>
                         </div>
                       </div>
                       <div v-else class="file-name">
@@ -134,8 +134,8 @@
           <!-- Budget Range -->
           <div v-if="isWholeHouseSelected" class="form-section">
             <h2 class="section-title">Budget Range</h2>
-            <h3 class="subsection-title">What is your target budget?</h3>
-            <p class="section-description">Please provide your budget range for this design project. This helps us match you with the right designer and create a proposal that fits your needs.</p>
+            <h3 class="subsection-title"><span class="required">*</span>What is your target budget?</h3>
+            <p class="section-description">Please select your budget range, this will help designers provide more suitable solutions</p>
             <div class="budget-options">
               <button 
                 v-for="budget in budgetRanges" 
@@ -144,13 +144,14 @@
                 :class="{ active: selectedBudget === budget.value }"
                 @click="selectedBudget = budget.value"
               >
-                {{ budget.label }}
+                <div class="budget-price">{{ budget.price }}</div>
+                <div class="budget-name">{{ budget.name }}</div>
               </button>
             </div>
           </div>
           
           <!-- Design Tier -->
-          <div class="form-section">
+          <div v-if="!isWholeHouseSelected" class="form-section">
             <h2 class="section-title">Design Tier</h2>
             <div class="tier-options">
               <button 
@@ -167,20 +168,93 @@
           </div>
           
           <!-- Inspiration Links -->
-          <!-- Inspiration Links -->
           <div class="form-section">
             <h2 class="section-title">Inspiration & Reference Links</h2>
             <div class="subsection-group">
               <div class="subsection-item">
-                <h3 class="subsection-title"><span class="required">*</span>Reference Source (optional)</h3>
-                <input 
-                  type="text" 
-                  placeholder="Paste a link to your Pinterest boards, online designs, or other inspiration source."
-                  class="link-input"
-                >
+                <h3 class="subsection-title"><span class="required">*</span>Inspiration Source (optional)</h3>
+                <textarea 
+                  placeholder="Paste a link to your Pinterest board, Houzz Ideabook, or other inspiration sources"
+                  class="description-textarea"
+                ></textarea>
               </div>
               
-              <div class="subsection-item">
+              <div v-if="isWholeHouseSelected" class="subsection-item">
+                <h3 class="subsection-title"><span class="required">*</span>Upload images</h3>
+                
+                <div v-for="roomName in ['Living Room', 'Bedroom', 'Dining Room', 'Kitchen', 'Study Room', 'Entrance']" :key="roomName" class="room-upload-section">
+                  <div class="room-upload-header">
+                    <span class="room-upload-label">{{ roomName }}</span>
+                    <button type="button" class="add-upload-btn" @click="addUploadSlot(roomName)">+ Add</button>
+                  </div>
+                  
+                  <div class="upload-grid">
+                    <!-- 第一个默认的上传框，永远存在，无删除按钮 -->
+                    <div class="upload-grid-item">
+                      <div class="upload-area-wrapper">
+                        <BFormFile
+                          class="custom-file-input"
+                          :placeholder="`Click to upload`"
+                          drop-placeholder="Drag and drop your file here"
+                          accept=".jpg,.jpeg,.png"
+                          @change="(event: any) => handleBFormFileUpload(event, roomName, 0)"
+                        >
+                          <template #file-name="{ files }">
+                            <div v-if="!roomUploadImages[roomName]?.[0]?.preview" class="upload-placeholder">
+                              <SvgIcon name="plus" size="clamp(16px, 1.25vw, 24px)" />
+                              <div class="upload-text-group">
+                                <p class="upload-text">Click to upload</p>
+                                <p class="upload-hint">{{ roomName }} reference image 1, JPG/PNG, max 5MB</p>
+                              </div>
+                            </div>
+                            <div v-else class="image-preview-container">
+                              <img :src="roomUploadImages[roomName][0].preview" alt="Preview" class="uploaded-image" />
+                            </div>
+                          </template>
+                        </BFormFile>
+                      </div>
+                    </div>
+                    
+                    <!-- 通过 Add 按钮添加的上传框，都有删除按钮 -->
+                    <div v-for="(slot, index) in roomUploadImages[roomName] || []" :key="`${roomName}-add-${index}`" class="upload-grid-item">
+                      <button 
+                        type="button" 
+                        class="delete-upload-btn" 
+                        @click.stop.prevent="removeImage(roomName, index)"
+                        title="Delete"
+                      >
+                        <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path fill-rule="evenodd" clip-rule="evenodd" d="M14.5 2V0L4.5 2.14577e-06V2L0 2V4H1.75L1.75 17.5C1.75 18.3284 2.42157 19 3.25 19L15.75 19C16.5784 19 17.25 18.3284 17.25 17.5V4L19 4V2L14.5 2ZM3.75 17L3.75 4L15.25 4V17L3.75 17ZM6.5 6.5V14H8.5V6.5H6.5ZM10.5 6.5V14H12.5V6.5H10.5Z" fill="white"/>
+                        </svg>
+                      </button>
+                      <div class="upload-area-wrapper">
+                        <BFormFile
+                          class="custom-file-input"
+                          :placeholder="`Click to upload`"
+                          drop-placeholder="Drag and drop your file here"
+                          accept=".jpg,.jpeg,.png"
+                          @change="(event: any) => handleBFormFileUpload(event, roomName, index + 1)"
+                        >
+                          <template #file-name="{ files }">
+                            <div v-if="!slot?.preview" class="upload-placeholder">
+                              <SvgIcon name="plus" size="clamp(16px, 1.25vw, 24px)" />
+                              <div class="upload-text-group">
+                                <p class="upload-text">Click to upload</p>
+                                <p class="upload-hint">{{ roomName }} reference image {{ index + 2 }}, JPG/PNG, max 5MB</p>
+                              </div>
+                            </div>
+                            <div v-else class="image-preview-container">
+                              <img :src="slot.preview" alt="Preview" class="uploaded-image" />
+                            </div>
+                          </template>
+                        </BFormFile>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div v-else class="subsection-item">
                 <h3 class="subsection-title"><span class="required">*</span>Upload Floor Plan with Dimensions</h3>
                 <div class="upload-area-wrapper">
                   <BFormFile
@@ -193,7 +267,7 @@
                       <div v-if="files.length === 0" class="upload-placeholder">
                         <SvgIcon name="plus" size="clamp(16px, 1.25vw, 24px)" />
                         <div class="upload-text-group">
-                          <p class="upload-text">Click to upload</p>
+                          <p class="upload-text">Click or drag the file to upload here</p>
                           <p class="upload-hint">Only pdf, png, jpg can be uploaded, and the size does not exceed 100MB</p>
                         </div>
                       </div>
@@ -318,7 +392,7 @@
           
           <!-- Action Buttons -->
           <div class="action-buttons">
-            <button class="submit-btn">Submit Design Request</button>
+            <button class="submit-btn" @click="handleSubmit">Submit Design Request</button>
             <button class="draft-btn">Save as Draft</button>
           </div>
         </div>
@@ -332,12 +406,15 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { BFormFile } from 'bootstrap-vue-next'
 import Datepicker from 'vue3-datepicker'
 import Header from '@/components/Header.vue'
 import Footer from '@/components/Footer.vue'
 import SvgIcon from '@/components/SvgIcon.vue'
 import CalendarIcon from '@/components/CalendarIcon.vue'
+
+const router = useRouter()
 
 // Room types
 const roomTypes = ['Bathroom', 'Living Room', 'Bedroom', 'Dining Room', 'Balcony', 'Whole House']
@@ -371,10 +448,10 @@ const selectedTier = ref('')
 
 // Budget ranges
 const budgetRanges = [
-  { value: 'budget', label: 'Budget' },
-  { value: 'economy', label: 'Economy' },
-  { value: 'moderate', label: 'Moderate' },
-  { value: 'luxurious', label: 'Luxurious' }
+  { value: 'basic', price: '$10,000', name: 'Basic' },
+  { value: 'standard', price: '$50,000', name: 'Standard' },
+  { value: 'premium', price: '$100,000', name: 'Premium' },
+  { value: 'luxury', price: '$150,000+', name: 'Luxury' }
 ]
 const selectedBudget = ref('')
 
@@ -386,14 +463,117 @@ const customTag = ref('')
 // Construction date
 const constructionDate = ref<Date | undefined>(undefined)
 
+// Upload images for each room type
+interface UploadedImage {
+  id: string
+  file: File
+  preview: string
+}
+
+const roomUploadImages = ref<Record<string, UploadedImage[]>>({
+  'Living Room': [],
+  'Bedroom': [],
+  'Dining Room': [],
+  'Kitchen': [],
+  'Study Room': [],
+  'Entrance': []
+})
+
+// Add upload slot for a room
+const addUploadSlot = (roomName: string) => {
+  if (!roomUploadImages.value[roomName]) {
+    roomUploadImages.value[roomName] = []
+  }
+  // Add a placeholder to increase the count
+  roomUploadImages.value[roomName].push({
+    id: `${roomName}-${Date.now()}`,
+    file: null as any,
+    preview: ''
+  })
+  console.log('Added slot for', roomName, roomUploadImages.value[roomName].length)
+}
+
+// Handle file upload
+const handleFileUpload = (event: Event, roomName: string, index: number) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  
+  if (file && file.type.startsWith('image/')) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const preview = e.target?.result as string
+      const uploadedImage: UploadedImage = {
+        id: `${roomName}-${Date.now()}-${index}`,
+        file,
+        preview
+      }
+      
+      if (!roomUploadImages.value[roomName]) {
+        roomUploadImages.value[roomName] = []
+      }
+      
+      // Replace or add image at index
+      if (roomUploadImages.value[roomName][index]) {
+        roomUploadImages.value[roomName][index] = uploadedImage
+      } else {
+        roomUploadImages.value[roomName].push(uploadedImage)
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+// Handle BFormFile upload
+const handleBFormFileUpload = (event: any, roomName: string, index: number) => {
+  const files = event.target?.files || event
+  const file = files?.[0]
+  
+  if (file && file.type.startsWith('image/')) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const preview = e.target?.result as string
+      const uploadedImage: UploadedImage = {
+        id: `${roomName}-${Date.now()}-${index}`,
+        file,
+        preview
+      }
+      
+      if (!roomUploadImages.value[roomName]) {
+        roomUploadImages.value[roomName] = []
+      }
+      
+      // Replace or add image at index
+      if (roomUploadImages.value[roomName][index]) {
+        roomUploadImages.value[roomName][index] = uploadedImage
+      } else {
+        roomUploadImages.value[roomName].push(uploadedImage)
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+// Remove uploaded image
+const removeImage = (roomName: string, index: number) => {
+  console.log('removeImage called:', roomName, index)
+  console.log('Before:', roomUploadImages.value[roomName])
+  
+  if (roomUploadImages.value[roomName]) {
+    roomUploadImages.value[roomName].splice(index, 1)
+  }
+  
+  console.log('After:', roomUploadImages.value[roomName])
+}
+
+// Add new upload slot
+const addNewUploadSlot = (roomName: string) => {
+  // This will be handled by v-for in template
+}
+
 // Toggle functions
 const toggleRoom = (room: string) => {
-  const index = selectedRooms.value.indexOf(room)
-  if (index > -1) {
-    selectedRooms.value.splice(index, 1)
-  } else {
-    selectedRooms.value.push(room)
-  }
+  // Single selection - replace the array with only the selected room
+  selectedRooms.value = [room]
 }
 
 const toggleStyle = (style: string) => {
@@ -421,6 +601,29 @@ const toggleTag = (tag: string) => {
   } else if (selectedTags.value.length < 10) {
     selectedTags.value.push(tag)
   }
+}
+
+// Handle submit
+const handleSubmit = () => {
+  // Get selected room type
+  const room = selectedRooms.value[0] || ''
+  
+  // Get selected tier (budget for Whole House, tier for others)
+  let tier = ''
+  if (isWholeHouseSelected.value) {
+    tier = selectedBudget.value
+  } else {
+    tier = selectedTier.value
+  }
+  
+  // Navigate to payment page with query params
+  router.push({
+    path: '/pay-design-fee',
+    query: {
+      room,
+      tier
+    }
+  })
 }
 
 // Handle select floating label
@@ -644,6 +847,112 @@ onMounted(() => {
   width: 50%;
 }
 
+.room-upload-section {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 0.63vw, 12px);
+  margin-bottom: clamp(16px, 1.25vw, 24px);
+}
+
+.upload-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(10px, 0.83vw, 16px);
+}
+
+.upload-grid-item {
+  position: relative;
+  width: calc(50% - clamp(5px, 0.42vw, 8px));
+}
+
+.upload-grid-item .upload-area-wrapper {
+  width: 100%;
+}
+
+.delete-upload-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: clamp(32px, 2.5vw, 48px);
+  height: clamp(32px, 2.5vw, 48px);
+  background: rgba(0, 0, 0, 0.2);
+  border: none;
+  border-radius: clamp(3px, 0.21vw, 4px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: background 0.2s;
+  padding: clamp(8px, 0.63vw, 12px);
+}
+
+.delete-upload-btn:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.delete-upload-btn svg {
+  width: clamp(12px, 0.99vw, 19px);
+  height: clamp(12px, 0.99vw, 19px);
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.image-preview-container {
+  position: relative;
+  width: 100%;
+  min-height: clamp(120px, 9.38vw, 180px);
+  padding: 0;
+}
+
+.uploaded-image {
+  width: 100%;
+  height: 100%;
+  min-height: clamp(120px, 9.38vw, 180px);
+  object-fit: cover;
+  border-radius: clamp(3px, 0.21vw, 4px);
+  display: block;
+}
+
+.room-upload-header {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 0.63vw, 12px);
+}
+
+.room-upload-label {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(12px, 0.73vw, 14px);
+  font-weight: 700;
+  line-height: clamp(18px, 1.15vw, 22px);
+  color: #333333;
+}
+
+.add-upload-btn {
+  width: clamp(38px, 2.97vw, 57px);
+  height: clamp(16px, 1.25vw, 24px);
+  padding: 1px 8px;
+  background: #F7FAFC;
+  border: 1px solid #00699A;
+  border-radius: clamp(3px, 0.21vw, 4px);
+  font-family: 'Arial', sans-serif;
+  font-size: clamp(9px, 0.73vw, 14px);
+  font-weight: 400;
+  line-height: clamp(15px, 1.15vw, 22px);
+  letter-spacing: 0;
+  color: #00699A;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(3px, 0.21vw, 4px);
+}
+
+.add-upload-btn:hover {
+  background: #E8F4F8;
+}
+
 .custom-file-input {
   width: 100%;
 }
@@ -680,15 +989,25 @@ onMounted(() => {
   width: 100%;
   height: auto;
   padding: 0;
-  border: 2px dashed #E5E6EB;
+  border: 1px dashed #86909C !important;
   border-radius: clamp(3px, 0.21vw, 4px);
-  background: transparent;
+  background: #F9F9F9 !important;
   transition: border-color 0.2s;
 }
 
 .custom-file-input :deep(.btn:hover) {
-  border-color: #00699A;
-  background: transparent;
+  border-color: #00699A !important;
+  background: #F9F9F9 !important;
+}
+
+.custom-file-input :deep(.b-form-file-text) {
+  border: 1px dashed #86909C !important;
+  border-radius: clamp(3px, 0.21vw, 4px);
+  background: #F9F9F9 !important;
+}
+
+.custom-file-input :deep(.b-form-file-text:hover) {
+  border-color: #00699A !important;
 }
 
 .upload-placeholder {
@@ -902,23 +1221,20 @@ onMounted(() => {
 }
 
 .budget-btn {
-  height: clamp(31px, 2.4vw, 46px);
+  min-width: clamp(91px, 7.08vw, 136px);
+  height: clamp(48px, 3.75vw, 72px);
   padding: clamp(8px, 0.63vw, 12px) clamp(16px, 1.25vw, 24px);
   background: white;
   border: 1px solid #E5E6EB;
   border-radius: clamp(3px, 0.21vw, 4px);
-  font-family: 'Inter', sans-serif;
-  font-size: clamp(12px, 0.73vw, 14px);
-  font-weight: 400;
-  line-height: clamp(18px, 1.15vw, 22px);
-  color: #333333;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: clamp(3px, 0.21vw, 4px);
   box-sizing: border-box;
-  white-space: nowrap;
 }
 
 .budget-btn:hover {
@@ -928,6 +1244,33 @@ onMounted(() => {
 .budget-btn.active {
   background: #F7FAFC;
   border-color: #00699A;
+}
+
+.budget-price {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(12px, 0.73vw, 14px);
+  font-weight: 700;
+  line-height: clamp(18px, 1.15vw, 22px);
+  letter-spacing: 0;
+  color: #333333;
+  text-align: center;
+}
+
+.budget-btn.active .budget-price {
+  color: #00699A;
+}
+
+.budget-name {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(12px, 0.73vw, 14px);
+  font-weight: 400;
+  line-height: clamp(18px, 1.15vw, 22px);
+  letter-spacing: 0;
+  color: #5C5C5C;
+  text-align: center;
+}
+
+.budget-btn.active .budget-name {
   color: #00699A;
 }
 
@@ -1152,7 +1495,7 @@ input.dimension-input:not(:placeholder-shown) + .floating-label,
 .action-buttons {
   display: flex;
   gap: clamp(4px, 0.42vw, 8px);
-  justify-content: center;
+  justify-content: flex-start;
   margin-top: 0;
 }
 
