@@ -621,7 +621,11 @@ const openPaymentForm = () => {
   paymentMethod.value = getFirstAvailablePaymentType()
 }
 
-const handlePayNow = () => {
+const handlePayNow = async () => {
+  if (!localStorage.getItem('token')) {
+    alert('Please sign in before placing an order')
+    return
+  }
   // 准备支付信息数据
   let paymentDataToSave = null
   
@@ -643,9 +647,24 @@ const handlePayNow = () => {
   if (paymentDataToSave) {
     localStorage.setItem('savedPaymentMethods', JSON.stringify(paymentDataToSave))
   }
-  
-  // 跳转到支付失败页面（用于测试）
-  window.location.href = '/payment-failed'
+
+  try {
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+    const token = localStorage.getItem('token')
+    const response = await fetch(`${baseUrl}/app/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: ''
+    })
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok || (payload.code !== undefined && payload.code !== 0 && payload.code !== 200)) throw new Error(payload.msg || 'Failed to place order')
+    localStorage.setItem('lastOrderResponse', JSON.stringify(payload))
+    window.location.href = '/payment-success'
+  } catch (error: any) {
+    console.error('下单失败:', error)
+    alert(error?.message || 'Failed to place order')
+    window.location.href = '/payment-failed'
+  }
 }
 const cancelPaymentForm = () => {
   showPaymentForm.value = false

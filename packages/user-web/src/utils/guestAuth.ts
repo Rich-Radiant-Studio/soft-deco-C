@@ -4,12 +4,25 @@
  */
 
 export interface GuestAccount {
-  id: string
+  id: string | number
   username: string
   token: string
   createdAt: number
   fingerprint: string
   isGuest: boolean
+}
+interface GuestSessionResponse { code?: number; msg?: string; data?: Record<string, any> | null }
+const GUEST_SESSION_PATH = '/app/guest/session'
+const createGuestSession = async (fingerprint: string): Promise<Record<string, any> | null> => {
+  const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+  try {
+    const response = await fetch(`${baseUrl}${GUEST_SESSION_PATH}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fingerprint }) })
+    if (!response.ok) throw new Error(`游客会话请求失败: ${response.status}`)
+    const payload = await response.json() as GuestSessionResponse
+    if (payload.code !== undefined && payload.code !== 0 && payload.code !== 200) throw new Error(`游客会话请求失败: ${payload.code}`)
+    const data = payload.data || (payload as any)
+    return data && typeof data === 'object' ? data : null
+  } catch (error) { console.error('创建游客会话失败，将使用本地游客账号:', error); return null }
 }
 
 /**
@@ -83,7 +96,7 @@ export const createGuestAccount = (): GuestAccount => {
 /**
  * 获取或创建游客账号
  */
-export const getOrCreateGuestAccount = (): GuestAccount => {
+export const getOrCreateGuestAccount = async (): Promise<GuestAccount> => {
   const stored = localStorage.getItem('guestAccount')
   
   if (stored) {
@@ -92,7 +105,9 @@ export const getOrCreateGuestAccount = (): GuestAccount => {
       // 检查账号是否过期（7天）
       const isExpired = Date.now() - account.createdAt > 7 * 24 * 60 * 60 * 1000
       
-      if (!isExpired) {
+      // 旧版本会生成 guest_fp_... 字符串，但后端注册接口要求后端返回的数字 guestId。
+      const hasBackendGuestId = typeof account.id === 'number' || (typeof account.id === 'string' && /^\d+$/.test(account.id))
+      if (!isExpired && hasBackendGuestId) {
         console.log('使用已存在的游客账号:', account.username)
         return account
       } else {
@@ -104,7 +119,10 @@ export const getOrCreateGuestAccount = (): GuestAccount => {
   }
   
   // 创建新游客账号
-  const newAccount = createGuestAccount()
+  const localAccount = createGuestAccount()
+  const session = await createGuestSession(localAccount.fingerprint)
+  const backendGuestId = session?.guestId ?? session?.id ?? session?.userId
+  const newAccount: GuestAccount = { ...localAccount, id: backendGuestId ?? localAccount.id, username: session?.username || session?.nickname || localAccount.username, token: session?.token || session?.accessToken || session?.access_token || localAccount.token }
   localStorage.setItem('guestAccount', JSON.stringify(newAccount))
   console.log('创建新游客账号:', newAccount.username)
   
@@ -114,7 +132,7 @@ export const getOrCreateGuestAccount = (): GuestAccount => {
 /**
  * 自动登录游客账号
  */
-export const autoLoginGuest = (): boolean => {
+export const autoLoginGuest = async (): Promise<boolean> => {
   try {
     // 检查是否已经登录
     const existingToken = localStorage.getItem('token')
@@ -130,7 +148,7 @@ export const autoLoginGuest = (): boolean => {
     }
     
     // 获取或创建游客账号
-    const guestAccount = getOrCreateGuestAccount()
+    const guestAccount = await getOrCreateGuestAccount()
     
     // 保存登录信息
     localStorage.setItem('token', guestAccount.token)

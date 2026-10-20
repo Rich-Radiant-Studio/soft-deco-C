@@ -33,7 +33,7 @@
             <button class="btn-secondary" @click="switchToRegister">Create Account</button>
             
             <div class="forgot-password">
-              <a href="#">Forgot Password?</a>
+              <a href="#" @click.prevent="handleResetPassword">Forgot Password?</a>
             </div>
           </div>
 
@@ -271,7 +271,7 @@ const roleOptions = [
 
 // 注册角色选项
 const registerRoleOptions = [
-  { value: 'user', icon: '👤', name: 'Customer', desc: 'Browse products and order' },
+  { value: 'customer', icon: '👤', name: 'Customer', desc: 'Browse products and order' },
   { value: 'designer', icon: '🎨', name: 'Designer', desc: 'Upload and sell your designs' },
   { value: 'supplier', icon: '🏪', name: 'Supplier', desc: 'Offer products on our marketplace' }
 ]
@@ -291,7 +291,7 @@ const registerForm = reactive({
   emailCode: '',
   phone: '',
   agreement: false,
-  role: 'user' as string,
+  role: 'customer' as string,
   // 设计师字段
   designerType: 'individual',
   designerName: '',
@@ -311,7 +311,7 @@ const registerForm = reactive({
 
 // 判断是否需要滚动
 const needsScroll = computed(() => {
-  return registerForm.role === 'supplier'
+  return registerForm.role === 'designer' || registerForm.role === 'supplier'
 })
 
 // 邮箱验证码按钮文本
@@ -338,28 +338,74 @@ const handleClose = () => {
 }
 
 // 处理登录
-const handleLogin = () => {
-  emit('login', loginForm)
-  handleClose()
+const handleLogin = async () => {
+  if (!loginForm.username || !loginForm.password) { alert('Please enter email and password'); return }
+  try {
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+    const guestAccount = localStorage.getItem('guestAccount')
+    const storedGuestId = guestAccount ? JSON.parse(guestAccount).id : undefined
+    const guestId = typeof storedGuestId === 'number' || (typeof storedGuestId === 'string' && /^\d+$/.test(storedGuestId)) ? storedGuestId : undefined
+    const response = await fetch(`${baseUrl}/app/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: loginForm.username, password: loginForm.password, ...(guestId ? { guestId } : {}) }) })
+    const payload = await response.json()
+    if (!response.ok || (payload.code !== undefined && payload.code !== 0 && payload.code !== 200)) throw new Error(payload.msg || 'Login failed')
+    const data = payload.data || {}
+    const token = data.token || data.accessToken || data.access_token
+    const userInfo = data.user || data.userInfo || data.account || data
+    if (token) localStorage.setItem('token', token)
+    if (userInfo && typeof userInfo === 'object') localStorage.setItem('userInfo', JSON.stringify({ ...userInfo, isGuest: false }))
+    emit('login', { ...loginForm, response: payload }); handleClose()
+  } catch (error: any) { console.error('登录失败:', error); alert(error?.message || 'Login failed') }
+}
+
+const handleResetPassword = async () => {
+  const email = window.prompt('Enter your email')?.trim(); if (!email) return
+  const code = window.prompt('Enter the verification code')?.trim(); if (!code) return
+  const password = window.prompt('Enter your new password') || ''; if (!password) return
+  try {
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+    const response = await fetch(`${baseUrl}/app/password/reset`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, code, password }) })
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok || (payload.code !== undefined && payload.code !== 0 && payload.code !== 200)) throw new Error(payload.msg || 'Password reset failed')
+    alert(payload.msg || 'Password reset successfully')
+  } catch (error: any) { console.error('重置密码失败:', error); alert(error?.message || 'Password reset failed') }
 }
 
 // 处理注册
-const handleRegister = () => {
+const handleRegister = async () => {
   if (!registerForm.agreement) {
     alert('Please agree to the terms')
     return
   }
-  emit('register', registerForm)
-  handleClose()
+  if (!registerForm.email || !registerForm.password || registerForm.password !== registerForm.confirmPassword) { alert('Please complete email and matching passwords'); return }
+  try {
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+    const guestAccount = localStorage.getItem('guestAccount')
+    const storedGuestId = guestAccount ? JSON.parse(guestAccount).id : undefined
+    const guestId = typeof storedGuestId === 'number' || (typeof storedGuestId === 'string' && /^\d+$/.test(storedGuestId)) ? storedGuestId : undefined
+    const body = { role: registerForm.role, email: registerForm.email, code: registerForm.emailCode, password: registerForm.password, confirmPassword: registerForm.confirmPassword, agreeTerms: registerForm.agreement, phone: registerForm.phone, designerNature: registerForm.designerType, displayName: registerForm.designerName, roomTypes: registerForm.roomTypes, companyName: registerForm.companyName, contactPerson: registerForm.contactPerson, contactPhone: registerForm.contactPhone, street: registerForm.street, city: registerForm.city, state: registerForm.state, country: registerForm.country, apartment: registerForm.apartment, postalCode: registerForm.zipCode, ...(guestId ? { guestId } : {}), clientIp: '' }
+    const response = await fetch(`${baseUrl}/app/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok || (payload.code !== undefined && payload.code !== 0 && payload.code !== 200)) throw new Error(payload.msg || 'Registration failed')
+    emit('register', { ...registerForm, response: payload }); alert(payload.msg || 'Registration successful'); handleClose()
+  } catch (error: any) { console.error('注册失败:', error); alert(error?.message || 'Registration failed') }
 }
 
 // 发送邮箱验证码
-const sendEmailCode = () => {
+const sendEmailCode = async () => {
+  if (emailCodeDisabled.value) return
   if (!registerForm.email) {
     alert('Please enter email first')
     return
   }
   
+  emailCodeDisabled.value = true
+  try {
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+    const response = await fetch(`${baseUrl}/app/verify-code/email`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: registerForm.email.trim(), clientIp: '' }) })
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok || (payload.code !== undefined && payload.code !== 0 && payload.code !== 200)) throw new Error(payload.msg || 'Failed to send verification code')
+    if (typeof payload.data === 'string' || typeof payload.data === 'number') registerForm.emailCode = String(payload.data)
+  } catch (error: any) { emailCodeDisabled.value = false; alert(error?.message || 'Failed to send verification code'); return }
   emailCodeDisabled.value = true
   countdown.value = 60
   
@@ -401,6 +447,8 @@ watch(() => props.visible, (newVal) => {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow-y: auto;
+  padding: 24px;
   z-index: 9999;
   padding: 20px;
 }
@@ -408,7 +456,7 @@ watch(() => props.visible, (newVal) => {
 .auth-modal-container {
   width: 100%;
   max-width: 1000px;
-  max-height: 90vh;
+  max-height: calc(100vh - 48px);
   display: flex;
   justify-content: center;
 }
@@ -419,7 +467,7 @@ watch(() => props.visible, (newVal) => {
   border-radius: 8px;
   padding: 40px;
   position: relative;
-  max-height: 90vh;
+  max-height: calc(100vh - 48px);
   overflow-y: auto;
 }
 
@@ -427,6 +475,7 @@ watch(() => props.visible, (newVal) => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
 }
 
 .close-btn {
@@ -534,7 +583,11 @@ watch(() => props.visible, (newVal) => {
 
 .modal-body.scrollable {
   overflow-y: auto;
-  max-height: calc(90vh - 400px);
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: calc(100vh - 430px);
+  overscroll-behavior: contain;
+  scrollbar-width: auto;
 }
 
 .form-group {
@@ -677,13 +730,17 @@ watch(() => props.visible, (newVal) => {
 
 /* 固定底部 */
 .modal-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, auto);
+  column-gap: 28px;
+  align-items: start;
   padding-top: 20px;
   border-top: 1px solid #e5e7eb;
   flex-shrink: 0;
 }
 
 .agreement-item {
-  margin-bottom: 16px;
+  margin: 0;
   font-size: 14px;
 }
 
@@ -700,13 +757,15 @@ watch(() => props.visible, (newVal) => {
 
 .footer-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 14px;
 }
 
 .login-link {
   color: #666;
   font-size: 14px;
+  text-align: right;
 }
 
 .login-link a {
@@ -780,6 +839,16 @@ watch(() => props.visible, (newVal) => {
 
 /* 响应式 */
 @media (max-width: 768px) {
+  .auth-modal-overlay {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .auth-modal-container,
+  .auth-modal {
+    max-height: calc(100vh - 24px);
+  }
+
   .role-grid {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -799,6 +868,16 @@ watch(() => props.visible, (newVal) => {
   .footer-actions {
     flex-direction: column;
     gap: 12px;
+    align-items: stretch;
+  }
+
+  .modal-footer {
+    grid-template-columns: 1fr;
+    row-gap: 16px;
+  }
+
+  .login-link {
+    text-align: left;
   }
   
   .action-buttons {

@@ -63,6 +63,16 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '我的订单' }
   },
   {
+    path: '/register',
+    component: () => import('@/views/Register.vue'),
+    meta: { title: '注册' }
+  },
+  {
+    path: '/login',
+    component: () => import('@/views/Login.vue'),
+    meta: { title: '登录' }
+  },
+  {
     path: '/case/:id',
     component: () => import('@/views/CaseDetail.vue'),
     meta: { title: '案例详情' }

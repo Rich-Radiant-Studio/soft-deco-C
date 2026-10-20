@@ -41,8 +41,13 @@ export const navigateToMainApp = (path: string, replace = false) => {
  * 登出并跳转到登录页
  * @param clearGuestAccount 是否清除游客账号
  */
-export const logoutAndNavigate = (clearGuestAccount = false) => {
+export const logoutAndNavigate = async (clearGuestAccount = false) => {
   console.log('Logging out...')
+  const token = localStorage.getItem('token')
+  try {
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+    await fetch(`${baseUrl}/app/logout`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: '' })
+  } catch (error) { console.warn('退出登录接口调用失败，继续清理本地状态:', error) }
   
   // 清除本地存储
   localStorage.removeItem('token')

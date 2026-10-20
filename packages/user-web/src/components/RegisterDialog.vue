@@ -210,7 +210,7 @@ const countdown = ref(0)
 
 // 角色选项
 const roleOptions = [
-  { value: 'user', icon: '👤' },
+  { value: 'customer', icon: '👤' },
   { value: 'designer', icon: '🎨' },
   { value: 'supplier', icon: '📦' }
 ]
@@ -223,7 +223,7 @@ const registerForm = ref({
   emailCode: '',
   phone: '',
   agreement: false,
-  role: 'user',
+  role: 'customer',
   // 设计师专属字段
   designerType: 'individual',
   designerName: '',
@@ -254,7 +254,7 @@ const show = () => {
     emailCode: '',
     phone: '',
     agreement: false,
-    role: 'user',
+    role: 'customer',
     designerType: 'individual',
     designerName: '',
     roomTypes: []
@@ -267,14 +267,21 @@ const hide = () => {
 }
 
 // 发送邮箱验证码
-const sendEmailCode = () => {
+const sendEmailCode = async () => {
+  if (emailCodeDisabled.value) return
   if (!registerForm.value.email) {
     alert($t('validation.emailRequired'))
     return
   }
   
-  // 模拟发送验证码
-  alert($t('register.codeSent'))
+  emailCodeDisabled.value = true
+  try {
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+    const response = await fetch(`${baseUrl}/app/verify-code/email`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: registerForm.value.email.trim(), clientIp: '' }) })
+    const payload = await response.json()
+    if (!response.ok || ![0, 200].includes(payload.code)) throw new Error(payload.msg || 'Failed to send verification code')
+    if (typeof payload.data === 'string' || typeof payload.data === 'number') registerForm.value.emailCode = String(payload.data)
+  } catch (error: any) { emailCodeDisabled.value = false; alert(error?.message || 'Failed to send verification code'); return }
   
   // 开始倒计时
   emailCodeDisabled.value = true

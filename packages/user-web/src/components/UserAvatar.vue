@@ -135,10 +135,10 @@ const handleUpgrade = () => {
 }
 
 // 处理登出
-const handleLogout = () => {
+const handleLogout = async () => {
   console.log('Logout clicked')
   if (confirm($t('common.logoutConfirm'))) {
-    navigation.logout(false)
+    await navigation.logout(false)
   }
 }
 

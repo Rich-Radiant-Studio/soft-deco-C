@@ -8,6 +8,7 @@ import App from './App.vue'
 import router from './router'
 import { createI18nPlugin } from './plugins/i18n'
 import { autoLoginGuest } from './utils/guestAuth'
+import { checkApiHealth } from './utils/healthCheck'
 import SvgIcon from './components/SvgIcon.vue'
 
 // 导入 SVG 图标注册
@@ -39,7 +40,14 @@ i18nPlugin.switchLocale(savedLocale)
 
 // 游客自动登录
 console.log('开始游客自动登录...')
-autoLoginGuest()
+void autoLoginGuest()
+
+// 后台探测 API 可用性，不阻塞页面渲染或游客登录流程。
+void checkApiHealth().then((healthy) => {
+  if (!healthy) {
+    console.warn('[API] 健康检查失败，后续请求可能不可用')
+  }
+})
 
 console.log('user-web 应用启动完成')
 
