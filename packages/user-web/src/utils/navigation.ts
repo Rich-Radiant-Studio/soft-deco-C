@@ -79,6 +79,7 @@ export const navigation = {
   toLogin: () => navigateToMainApp('/login'),
   toRegister: () => navigateToMainApp('/register'),
   toUser: () => navigateToMainApp('/user'),
-  toDashboard: () => navigateToMainApp('/dashboard'),
+  // Unified B-side sign-in route; deliberately never forwards a C-side token.
+  toDashboard: () => navigateToMainApp('/admin/login'),
   logout: (clearGuestAccount = false) => logoutAndNavigate(clearGuestAccount)
 }

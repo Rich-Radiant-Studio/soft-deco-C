@@ -7,9 +7,10 @@ export interface GuestAccount {
   id: string | number
   username: string
   token: string
-  createdAt: number
+  expiresAt: number
   fingerprint: string
   isGuest: boolean
+  backendIssued: boolean
 }
 interface GuestSessionResponse { code?: number; msg?: string; data?: Record<string, any> | null }
 const GUEST_SESSION_PATH = '/app/guest/session'
@@ -22,7 +23,7 @@ const createGuestSession = async (fingerprint: string): Promise<Record<string, a
     if (payload.code !== undefined && payload.code !== 0 && payload.code !== 200) throw new Error(`游客会话请求失败: ${payload.code}`)
     const data = payload.data || (payload as any)
     return data && typeof data === 'object' ? data : null
-  } catch (error) { console.error('创建游客会话失败，将使用本地游客账号:', error); return null }
+  } catch (error) { console.error('创建游客会话失败:', error); throw error }
 }
 
 /**
@@ -65,35 +66,6 @@ const generateFingerprint = (): string => {
 }
 
 /**
- * 生成游客用户名
- */
-const generateGuestUsername = (fingerprint: string): string => {
-  const suffix = fingerprint.slice(-6).toUpperCase()
-  return `Guest_${suffix}`
-}
-
-/**
- * 创建游客账号
- */
-export const createGuestAccount = (): GuestAccount => {
-  const fingerprint = generateFingerprint()
-  const username = generateGuestUsername(fingerprint)
-  const guestId = `guest_${fingerprint}_${Date.now()}`
-  const token = `guest_token_${fingerprint}_${Date.now()}`
-  
-  const guestAccount: GuestAccount = {
-    id: guestId,
-    username,
-    token,
-    createdAt: Date.now(),
-    fingerprint,
-    isGuest: true
-  }
-  
-  return guestAccount
-}
-
-/**
  * 获取或创建游客账号
  */
 export const getOrCreateGuestAccount = async (): Promise<GuestAccount> => {
@@ -102,12 +74,10 @@ export const getOrCreateGuestAccount = async (): Promise<GuestAccount> => {
   if (stored) {
     try {
       const account = JSON.parse(stored) as GuestAccount
-      // 检查账号是否过期（7天）
-      const isExpired = Date.now() - account.createdAt > 7 * 24 * 60 * 60 * 1000
-      
-      // 旧版本会生成 guest_fp_... 字符串，但后端注册接口要求后端返回的数字 guestId。
+      const expiresAt = Number(account.expiresAt)
+      const isExpired = !Number.isFinite(expiresAt) || Date.now() >= expiresAt
       const hasBackendGuestId = typeof account.id === 'number' || (typeof account.id === 'string' && /^\d+$/.test(account.id))
-      if (!isExpired && hasBackendGuestId) {
+      if (!isExpired && hasBackendGuestId && account.token) {
         console.log('使用已存在的游客账号:', account.username)
         return account
       } else {
@@ -118,11 +88,17 @@ export const getOrCreateGuestAccount = async (): Promise<GuestAccount> => {
     }
   }
   
-  // 创建新游客账号
-  const localAccount = createGuestAccount()
-  const session = await createGuestSession(localAccount.fingerprint)
+  // Guest identity, token, and expiry are issued by the backend.
+  const fingerprint = generateFingerprint()
+  const session = await createGuestSession(fingerprint)
   const backendGuestId = session?.guestId ?? session?.id ?? session?.userId
-  const newAccount: GuestAccount = { ...localAccount, id: backendGuestId ?? localAccount.id, username: session?.username || session?.nickname || localAccount.username, token: session?.token || session?.accessToken || session?.access_token || localAccount.token }
+  const token = session?.token || session?.accessToken || session?.access_token
+  if (!backendGuestId || !token) throw new Error('游客会话响应缺少 guestId 或 token')
+  const backendExpiry = session?.expiresAt ?? session?.expireAt ?? session?.tokenExpiry
+  const expiresIn = Number(session?.expiresIn ?? session?.expires_in)
+  const expiresAt = backendExpiry ? (typeof backendExpiry === 'number' ? (backendExpiry < 1e12 ? backendExpiry * 1000 : backendExpiry) : Date.parse(backendExpiry)) : Number.isFinite(expiresIn) && expiresIn > 0 ? Date.now() + expiresIn * 1000 : Date.now() + 7 * 24 * 60 * 60 * 1000
+  if (!Number.isFinite(expiresAt)) throw new Error('游客会话响应中的过期时间无效')
+  const newAccount: GuestAccount = { id: backendGuestId, username: session?.username || session?.nickname || `Guest_${String(backendGuestId)}`, token, expiresAt, fingerprint, isGuest: true, backendIssued: true }
   localStorage.setItem('guestAccount', JSON.stringify(newAccount))
   console.log('创建新游客账号:', newAccount.username)
   
@@ -152,7 +128,7 @@ export const autoLoginGuest = async (): Promise<boolean> => {
     
     // 保存登录信息
     localStorage.setItem('token', guestAccount.token)
-    localStorage.setItem('tokenExpiry', String(Date.now() + 7 * 24 * 60 * 60 * 1000))
+    localStorage.setItem('tokenExpiry', String(guestAccount.expiresAt))
     localStorage.setItem('userInfo', JSON.stringify({
       id: guestAccount.id,
       username: guestAccount.username,

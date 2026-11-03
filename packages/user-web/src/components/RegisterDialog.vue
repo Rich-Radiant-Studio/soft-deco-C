@@ -280,7 +280,15 @@ const sendEmailCode = async () => {
     const response = await fetch(`${baseUrl}/app/verify-code/email`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: registerForm.value.email.trim(), clientIp: '' }) })
     const payload = await response.json()
     if (!response.ok || ![0, 200].includes(payload.code)) throw new Error(payload.msg || 'Failed to send verification code')
-    if (typeof payload.data === 'string' || typeof payload.data === 'number') registerForm.value.emailCode = String(payload.data)
+    // 测试环境可能直接返回验证码，也可能包在 data/code/verificationCode 中
+    const returnedCode = payload.data && typeof payload.data === 'object'
+      ? (payload.data.code ?? payload.data.verificationCode ?? payload.data.emailCode)
+      : (payload.data ?? payload.verificationCode ?? payload.emailCode)
+    if (typeof returnedCode === 'string' || typeof returnedCode === 'number') {
+      registerForm.value.emailCode = String(returnedCode)
+    } else {
+      console.warn('验证码接口未返回验证码内容:', payload)
+    }
   } catch (error: any) { emailCodeDisabled.value = false; alert(error?.message || 'Failed to send verification code'); return }
   
   // 开始倒计时

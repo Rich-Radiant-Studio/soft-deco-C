@@ -54,13 +54,93 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/profile',
-    component: () => import('@/views/Profile.vue'),
+    component: () => import('@/views/AccountOverview.vue'),
     meta: { title: '个人中心' }
   },
   {
     path: '/profile/orders',
-    component: () => import('@/views/Profile.vue'),
+    component: () => import('@/views/MyOrders.vue'),
     meta: { title: '我的订单' }
+  },
+  {
+    path: '/profile/after-sales',
+    component: () => import('@/views/AfterSalesOrders.vue'),
+    meta: { title: '售后订单' }
+  },
+  {
+    path: '/profile/after-sales/:id',
+    component: () => import('@/views/AfterSalesDetail.vue'),
+    meta: { title: '售后订单详情' }
+  },
+  {
+    path: '/profile/transactions',
+    component: () => import('@/views/Transactions.vue'),
+    meta: { title: '我的交易' }
+  },
+  {
+    path: '/profile/favorites',
+    component: () => import('@/views/Favorites.vue'),
+    meta: { title: '我的收藏' }
+  },
+  {
+    path: '/profile/likes',
+    component: () => import('@/views/Likes.vue'),
+    meta: { title: '我的点赞' }
+  },
+  {
+    path: '/profile/browsing-history',
+    component: () => import('@/views/BrowsingHistory.vue'),
+    meta: { title: '浏览历史' }
+  },
+  {
+    path: '/profile/recommendations',
+    component: () => import('@/views/Recommendations.vue'),
+    meta: { title: '平台推荐' }
+  },
+  {
+    path: '/profile/addresses',
+    component: () => import('@/views/Addresses.vue'),
+    meta: { title: '收货地址' }
+  },
+  {
+    path: '/profile/payment-methods',
+    component: () => import('@/views/PaymentMethods.vue'),
+    meta: { title: '支付方式' }
+  },
+  {
+    path: '/profile/settings',
+    component: () => import('@/views/Settings.vue'),
+    meta: { title: '账户设置' }
+  },
+  {
+    path: '/logout',
+    component: () => import('@/views/Logout.vue'),
+    meta: { title: '退出登录' }
+  },
+  {
+    path: '/profile/orders/:id/refund',
+    component: () => import('@/views/RefundRequest.vue'),
+    meta: { title: '申请退款' }
+  },
+  {
+    path: '/profile/orders/:id',
+    component: () => import('@/views/OrderDetail.vue'),
+    meta: { title: '订单详情' }
+  },
+  {
+    path: '/profile/orders/:id/review',
+    component: () => import('@/views/ReviewModal.vue'),
+    meta: { title: '评价订单' }
+  },
+  {
+    path: '/profile/requests',
+    component: () => import('@/views/MyRequests.vue'),
+    meta: { title: '我的需求' }
+  },
+  {
+    path: '/profile/requests/:id',
+    component: () => import('@/views/DesignRequestDetail.vue'),
+    meta: { title: '需求详情' }
   },
   {
     path: '/register',

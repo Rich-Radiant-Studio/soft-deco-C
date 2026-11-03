@@ -7,21 +7,11 @@
           <button class="close-btn" @click="handleClose">×</button>
           <h2>Sign In</h2>
           
-          <!-- 角色选择 -->
-          <div class="role-grid">
-            <div v-for="role in roleOptions" :key="role.value" 
-                 :class="['role-card', { active: loginForm.role === role.value }]"
-                 @click="loginForm.role = role.value">
-              <div class="role-icon">{{ role.icon }}</div>
-              <div class="role-name">{{ role.name }}</div>
-            </div>
-          </div>
-
           <!-- 登录表单 -->
           <div class="form-wrapper">
             <div class="form-group">
               <label>Email</label>
-              <input v-model="loginForm.username" type="email" placeholder="Enter your email" />
+              <input v-model="loginForm.email" type="email" placeholder="Enter your email" />
             </div>
             
             <div class="form-group">
@@ -37,20 +27,7 @@
             </div>
           </div>
 
-          <!-- 第三方登录 -->
-          <div class="social-login">
-            <div class="divider">Or sign in with</div>
-            <button class="social-btn google-btn">
-              <span>G</span> Google
-            </button>
-            <button class="social-btn facebook-btn">
-              <span>f</span> Facebook
-            </button>
-            <div class="no-account">
-              Don't have an account? 
-              <a href="#" @click.prevent="switchToRegister">Register now</a>
-            </div>
-          </div>
+          <div class="no-account">Don't have an account? <a href="#" @click.prevent="switchToRegister">Register now</a></div>
         </div>
 
         <!-- 注册模态框 -->
@@ -261,14 +238,6 @@ const emailCodeDisabled = ref(false)
 const countdown = ref(0)
 
 // 登录角色选项
-const roleOptions = [
-  { value: 'user', icon: '👤', name: 'Customer' },
-  { value: 'designer', icon: '🎨', name: 'Designer' },
-  { value: 'supplier', icon: '🏪', name: 'Supplier' },
-  { value: 'contractor', icon: '🔧', name: 'Contractor' },
-  { value: 'guest', icon: '👥', name: 'Guest' }
-]
-
 // 注册角色选项
 const registerRoleOptions = [
   { value: 'customer', icon: '👤', name: 'Customer', desc: 'Browse products and order' },
@@ -278,9 +247,8 @@ const registerRoleOptions = [
 
 // 登录表单
 const loginForm = reactive({
-  username: '',
-  password: '',
-  role: 'user' as string
+  email: '',
+  password: ''
 })
 
 // 注册表单
@@ -339,13 +307,13 @@ const handleClose = () => {
 
 // 处理登录
 const handleLogin = async () => {
-  if (!loginForm.username || !loginForm.password) { alert('Please enter email and password'); return }
+  if (!loginForm.email || !loginForm.password) { alert('Please enter email and password'); return }
   try {
     const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
     const guestAccount = localStorage.getItem('guestAccount')
     const storedGuestId = guestAccount ? JSON.parse(guestAccount).id : undefined
-    const guestId = typeof storedGuestId === 'number' || (typeof storedGuestId === 'string' && /^\d+$/.test(storedGuestId)) ? storedGuestId : undefined
-    const response = await fetch(`${baseUrl}/app/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: loginForm.username, password: loginForm.password, ...(guestId ? { guestId } : {}) }) })
+    const guestId = guestAccount && JSON.parse(guestAccount).backendIssued && (typeof storedGuestId === 'number' ? Number.isInteger(storedGuestId) : typeof storedGuestId === 'string' && /^\d+$/.test(storedGuestId)) ? storedGuestId : undefined
+    const response = await fetch(`${baseUrl}/app/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: loginForm.email, password: loginForm.password, ...(guestId !== undefined ? { guestId } : {}) }) })
     const payload = await response.json()
     if (!response.ok || (payload.code !== undefined && payload.code !== 0 && payload.code !== 200)) throw new Error(payload.msg || 'Login failed')
     const data = payload.data || {}
@@ -377,12 +345,29 @@ const handleRegister = async () => {
     return
   }
   if (!registerForm.email || !registerForm.password || registerForm.password !== registerForm.confirmPassword) { alert('Please complete email and matching passwords'); return }
+  if (registerForm.role === 'designer' && (!registerForm.designerType || !registerForm.designerName.trim() || registerForm.roomTypes.length === 0)) { alert('Please complete designer nature, display name and select at least one space type'); return }
+  if (registerForm.role === 'supplier' && (!registerForm.companyName.trim() || !registerForm.contactPerson.trim() || !registerForm.contactPhone.trim() || !registerForm.street.trim() || !registerForm.city.trim() || !registerForm.state.trim() || !registerForm.country.trim())) { alert('Please complete all required supplier details'); return }
   try {
     const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
     const guestAccount = localStorage.getItem('guestAccount')
     const storedGuestId = guestAccount ? JSON.parse(guestAccount).id : undefined
-    const guestId = typeof storedGuestId === 'number' || (typeof storedGuestId === 'string' && /^\d+$/.test(storedGuestId)) ? storedGuestId : undefined
-    const body = { role: registerForm.role, email: registerForm.email, code: registerForm.emailCode, password: registerForm.password, confirmPassword: registerForm.confirmPassword, agreeTerms: registerForm.agreement, phone: registerForm.phone, designerNature: registerForm.designerType, displayName: registerForm.designerName, roomTypes: registerForm.roomTypes, companyName: registerForm.companyName, contactPerson: registerForm.contactPerson, contactPhone: registerForm.contactPhone, street: registerForm.street, city: registerForm.city, state: registerForm.state, country: registerForm.country, apartment: registerForm.apartment, postalCode: registerForm.zipCode, ...(guestId ? { guestId } : {}), clientIp: '' }
+    const guestId = guestAccount && JSON.parse(guestAccount).backendIssued && (typeof storedGuestId === 'number' ? Number.isInteger(storedGuestId) : typeof storedGuestId === 'string' && /^\d+$/.test(storedGuestId)) ? storedGuestId : undefined
+    const body: Record<string, unknown> = {
+      role: registerForm.role,
+      email: registerForm.email.trim(),
+      code: registerForm.emailCode.trim(),
+      password: registerForm.password,
+      confirmPassword: registerForm.confirmPassword,
+      agreeTerms: registerForm.agreement,
+      phone: registerForm.phone.trim(),
+      apartment: registerForm.apartment.trim(),
+      postalCode: registerForm.zipCode.trim(),
+      materialCategories: registerForm.businessCategories,
+      clientIp: '',
+      ...(guestId !== undefined ? { guestId } : {})
+    }
+    if (registerForm.role === 'designer') Object.assign(body, { designerNature: registerForm.designerType, displayName: registerForm.designerName.trim(), roomTypes: registerForm.roomTypes })
+    if (registerForm.role === 'supplier') Object.assign(body, { companyName: registerForm.companyName.trim(), contactPerson: registerForm.contactPerson.trim(), contactPhone: registerForm.contactPhone.trim(), street: registerForm.street.trim(), city: registerForm.city.trim(), state: registerForm.state.trim(), country: registerForm.country.trim() })
     const response = await fetch(`${baseUrl}/app/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     const payload = await response.json().catch(() => ({}))
     if (!response.ok || (payload.code !== undefined && payload.code !== 0 && payload.code !== 200)) throw new Error(payload.msg || 'Registration failed')
@@ -404,7 +389,15 @@ const sendEmailCode = async () => {
     const response = await fetch(`${baseUrl}/app/verify-code/email`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: registerForm.email.trim(), clientIp: '' }) })
     const payload = await response.json().catch(() => ({}))
     if (!response.ok || (payload.code !== undefined && payload.code !== 0 && payload.code !== 200)) throw new Error(payload.msg || 'Failed to send verification code')
-    if (typeof payload.data === 'string' || typeof payload.data === 'number') registerForm.emailCode = String(payload.data)
+    // 测试环境可能直接返回验证码，也可能包在 data/code/verificationCode 中
+    const returnedCode = payload.data && typeof payload.data === 'object'
+      ? (payload.data.code ?? payload.data.verificationCode ?? payload.data.emailCode)
+      : (payload.data ?? payload.verificationCode ?? payload.emailCode)
+    if (typeof returnedCode === 'string' || typeof returnedCode === 'number') {
+      registerForm.emailCode = String(returnedCode)
+    } else {
+      console.warn('验证码接口未返回验证码内容:', payload)
+    }
   } catch (error: any) { emailCodeDisabled.value = false; alert(error?.message || 'Failed to send verification code'); return }
   emailCodeDisabled.value = true
   countdown.value = 60
