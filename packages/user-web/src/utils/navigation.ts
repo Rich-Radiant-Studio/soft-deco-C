@@ -72,6 +72,25 @@ export const logoutAndNavigate = async (clearGuestAccount = false) => {
   }
 }
 
+/** 前往独立管理端登录页；不附带 C 端 token。 */
+const navigateToAdminLogin = () => {
+  // 微前端宿主将 /admin/login 映射到管理端应用。
+  if (window.parent && window.parent !== window) {
+    navigateToMainApp('/admin/login')
+    return
+  }
+
+  // 独立运行时需由部署环境配置管理端 origin。
+  const adminBaseUrl = (import.meta.env.VITE_ADMIN_BASE_URL || '').trim().replace(/\/+$/, '')
+  if (!adminBaseUrl) {
+    console.error('独立运行 C 端时必须配置 VITE_ADMIN_BASE_URL')
+    window.alert('管理端地址尚未配置，请联系管理员。')
+    return
+  }
+
+  window.location.replace(new URL('/login', adminBaseUrl).toString())
+}
+
 /**
  * 常用路由快捷方法
  */
@@ -80,6 +99,7 @@ export const navigation = {
   toRegister: () => navigateToMainApp('/register'),
   toUser: () => navigateToMainApp('/user'),
   // Unified B-side sign-in route; deliberately never forwards a C-side token.
-  toDashboard: () => navigateToMainApp('/admin/login'),
+  toDashboard: navigateToAdminLogin,
+  toAdminLogin: navigateToAdminLogin,
   logout: (clearGuestAccount = false) => logoutAndNavigate(clearGuestAccount)
 }

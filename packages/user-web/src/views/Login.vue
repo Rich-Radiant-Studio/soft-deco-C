@@ -1,6 +1,6 @@
 <template>
   <div class="login-page">
-    <AuthModal :visible="true" initial-mode="login" @update:visible="handleClose" />
+    <AuthModal :visible="true" initial-mode="login" @update:visible="handleClose" @login="handleLogin" />
   </div>
 </template>
 
@@ -10,6 +10,7 @@ import AuthModal from '@/components/AuthModal.vue'
 
 const router = useRouter()
 const handleClose = () => router.push('/')
+const handleLogin = () => router.push('/')
 </script>
 
 <style scoped>

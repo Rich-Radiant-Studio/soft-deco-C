@@ -4,7 +4,7 @@
     <div class="top-nav-bar">
       <div class="container-fluid px-4">
         <div class="d-flex align-items-center justify-content-end" style="gap: 16px;">
-          <button class="btn btn-sm btn-register">
+          <button class="btn btn-sm btn-register" type="button" @click="handleRegister">
             <i class="bi bi-person-plus-fill me-2"></i>{{ $t('nav.register') }}
           </button>
           <LanguageSwitcher />
@@ -82,10 +82,13 @@ import { inject, ref } from 'vue'
 import LanguageSwitcher from './LanguageSwitcher.vue'
 import UserAvatar from './UserAvatar.vue'
 import AboutUsDropdown from './AboutUsDropdown.vue'
+import { navigation } from '@/utils/navigation'
 import type { I18nPlugin } from '@/plugins/i18n'
 
 const i18n = inject<I18nPlugin>('i18n')
 const $t = (key: string) => i18n?.t(key) || key
+
+const handleRegister = () => navigation.toRegister()
 
 // 购物车数量（示例）
 const cartCount = ref(0)

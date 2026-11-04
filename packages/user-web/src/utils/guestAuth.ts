@@ -96,8 +96,10 @@ export const getOrCreateGuestAccount = async (): Promise<GuestAccount> => {
   if (!backendGuestId || !token) throw new Error('游客会话响应缺少 guestId 或 token')
   const backendExpiry = session?.expiresAt ?? session?.expireAt ?? session?.tokenExpiry
   const expiresIn = Number(session?.expiresIn ?? session?.expires_in)
-  const expiresAt = backendExpiry ? (typeof backendExpiry === 'number' ? (backendExpiry < 1e12 ? backendExpiry * 1000 : backendExpiry) : Date.parse(backendExpiry)) : Number.isFinite(expiresIn) && expiresIn > 0 ? Date.now() + expiresIn * 1000 : Date.now() + 7 * 24 * 60 * 60 * 1000
-  if (!Number.isFinite(expiresAt)) throw new Error('游客会话响应中的过期时间无效')
+  const expiresAt = backendExpiry !== undefined && backendExpiry !== null && backendExpiry !== ''
+    ? (typeof backendExpiry === 'number' ? (backendExpiry < 1e12 ? backendExpiry * 1000 : backendExpiry) : Date.parse(backendExpiry))
+    : Number.isFinite(expiresIn) && expiresIn > 0 ? Date.now() + expiresIn * 1000 : NaN
+  if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) throw new Error('游客会话响应缺少有效的后端过期时间')
   const newAccount: GuestAccount = { id: backendGuestId, username: session?.username || session?.nickname || `Guest_${String(backendGuestId)}`, token, expiresAt, fingerprint, isGuest: true, backendIssued: true }
   localStorage.setItem('guestAccount', JSON.stringify(newAccount))
   console.log('创建新游客账号:', newAccount.username)

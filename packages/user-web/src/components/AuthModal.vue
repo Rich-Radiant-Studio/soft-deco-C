@@ -221,6 +221,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
+import { navigation } from '@/utils/navigation'
 
 const props = defineProps<{
   visible: boolean
@@ -313,7 +314,7 @@ const handleLogin = async () => {
     const guestAccount = localStorage.getItem('guestAccount')
     const storedGuestId = guestAccount ? JSON.parse(guestAccount).id : undefined
     const guestId = guestAccount && JSON.parse(guestAccount).backendIssued && (typeof storedGuestId === 'number' ? Number.isInteger(storedGuestId) : typeof storedGuestId === 'string' && /^\d+$/.test(storedGuestId)) ? storedGuestId : undefined
-    const response = await fetch(`${baseUrl}/app/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: loginForm.email, password: loginForm.password, ...(guestId !== undefined ? { guestId } : {}) }) })
+    const response = await fetch(`${baseUrl}/app/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role: 'customer', email: loginForm.email.trim(), password: loginForm.password, ...(guestId !== undefined ? { guestId } : {}) }) })
     const payload = await response.json()
     if (!response.ok || (payload.code !== undefined && payload.code !== 0 && payload.code !== 200)) throw new Error(payload.msg || 'Login failed')
     const data = payload.data || {}
@@ -371,7 +372,14 @@ const handleRegister = async () => {
     const response = await fetch(`${baseUrl}/app/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     const payload = await response.json().catch(() => ({}))
     if (!response.ok || (payload.code !== undefined && payload.code !== 0 && payload.code !== 200)) throw new Error(payload.msg || 'Registration failed')
-    emit('register', { ...registerForm, response: payload }); alert(payload.msg || 'Registration successful'); handleClose()
+    emit('register', { ...registerForm, response: payload })
+    if (registerForm.role === 'designer' || registerForm.role === 'supplier') {
+      alert(payload.msg || 'Registration successful. Please sign in to the management portal.')
+      navigation.toDashboard()
+      return
+    }
+    alert(payload.msg || 'Registration successful')
+    handleClose()
   } catch (error: any) { console.error('注册失败:', error); alert(error?.message || 'Registration failed') }
 }
 
