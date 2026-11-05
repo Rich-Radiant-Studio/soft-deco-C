@@ -5,22 +5,30 @@
         <!-- 登录模态框 -->
         <div v-if="mode === 'login'" class="auth-modal">
           <button class="close-btn" @click="handleClose">×</button>
-          <h2>Sign In</h2>
+          <h2>Login your account</h2>
+
+          <div class="role-selection login-role-selection">
+            <div v-for="role in registerRoleOptions" :key="role.value" class="role-card" :class="{ active: loginForm.role === role.value }" @click="loginForm.role = role.value">
+              <div class="role-icon">{{ role.icon }}</div>
+              <h3>{{ role.name }}</h3>
+              <p>{{ role.desc }}</p>
+            </div>
+          </div>
           
           <!-- 登录表单 -->
           <div class="form-wrapper">
             <div class="form-group">
-              <label>Email</label>
-              <input v-model="loginForm.email" type="email" placeholder="Enter your email" />
+              <label><span>*</span>Email</label>
+              <input v-model="loginForm.email" type="email" placeholder="Email" />
             </div>
             
             <div class="form-group">
-              <label>Password</label>
-              <input v-model="loginForm.password" type="password" placeholder="Enter password" />
+              <label><span>*</span>Password</label>
+              <input v-model="loginForm.password" type="password" placeholder="Password" />
             </div>
             
-            <button class="btn-primary" @click="handleLogin">Sign In</button>
-            <button class="btn-secondary" @click="switchToRegister">Create Account</button>
+            <button class="btn-primary" @click="handleLogin">LOG IN</button>
+            <button class="btn-secondary" @click="switchToRegister">Register a new account</button>
             
             <div class="forgot-password">
               <a href="#" @click.prevent="handleResetPassword">Forgot Password?</a>
@@ -249,7 +257,8 @@ const registerRoleOptions = [
 // 登录表单
 const loginForm = reactive({
   email: '',
-  password: ''
+  password: '',
+  role: 'customer' as string
 })
 
 // 注册表单
@@ -308,13 +317,13 @@ const handleClose = () => {
 
 // 处理登录
 const handleLogin = async () => {
-  if (!loginForm.email || !loginForm.password) { alert('Please enter email and password'); return }
+    if (!loginForm.email || !loginForm.password) { alert('Please enter email and password'); return }
   try {
     const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
     const guestAccount = localStorage.getItem('guestAccount')
     const storedGuestId = guestAccount ? JSON.parse(guestAccount).id : undefined
     const guestId = guestAccount && JSON.parse(guestAccount).backendIssued && (typeof storedGuestId === 'number' ? Number.isInteger(storedGuestId) : typeof storedGuestId === 'string' && /^\d+$/.test(storedGuestId)) ? storedGuestId : undefined
-    const response = await fetch(`${baseUrl}/app/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role: 'customer', email: loginForm.email.trim(), password: loginForm.password, ...(guestId !== undefined ? { guestId } : {}) }) })
+    const response = await fetch(`${baseUrl}/app/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role: loginForm.role, email: loginForm.email.trim(), password: loginForm.password, ...(guestId !== undefined ? { guestId } : {}) }) })
     const payload = await response.json()
     if (!response.ok || (payload.code !== undefined && payload.code !== 0 && payload.code !== 200)) throw new Error(payload.msg || 'Login failed')
     const data = payload.data || {}
@@ -456,7 +465,7 @@ watch(() => props.visible, (newVal) => {
 
 .auth-modal-container {
   width: 100%;
-  max-width: 1000px;
+  max-width: 760px;
   max-height: calc(100vh - 48px);
   display: flex;
   justify-content: center;
@@ -499,12 +508,34 @@ watch(() => props.visible, (newVal) => {
 }
 
 .auth-modal h2 {
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 36px;
+  font-weight: 700;
   color: #333;
   margin: 0 0 8px 0;
   text-align: center;
 }
+
+.login-role-selection { margin: 30px 0 24px; gap: 24px; }
+.login-role-selection .role-card { min-height: 118px; display: flex; flex-direction: column; justify-content: center; padding: 14px 12px; border-width: 2px; }
+.login-role-selection .role-card.active { border-color: #0078b8; background: #f4fbff; }
+.login-role-selection .role-icon { font-size: 34px; filter: grayscale(1); }
+.login-role-selection .role-card.active .role-icon,
+.login-role-selection .role-card.active h3,
+.login-role-selection .role-card.active p { color: #0078b8; }
+.login-role-selection .role-card h3 { font-size: 18px; margin: 4px 0 8px; }
+.login-role-selection .role-card p { font-size: 15px; line-height: 1.35; }
+.login-role-selection + .form-wrapper { border: 0; padding: 0; margin: 0; }
+.auth-modal:has(.login-role-selection) { padding: 34px 48px 42px; }
+.auth-modal:has(.login-role-selection) { max-height: calc(100vh - 48px); }
+.auth-modal:has(.login-role-selection) .form-group { margin-bottom: 24px; }
+.auth-modal:has(.login-role-selection) .form-group label { font-size: 20px; color: #555; }
+.auth-modal:has(.login-role-selection) .form-group label span { color: #e33; }
+.auth-modal:has(.login-role-selection) .form-group input { height: 52px; font-size: 16px; padding: 0 14px; border: 2px solid #e0e3e8; }
+.auth-modal:has(.login-role-selection) .btn-primary,
+.auth-modal:has(.login-role-selection) .btn-secondary { height: 56px; font-size: 18px; border-radius: 6px; }
+.auth-modal:has(.login-role-selection) .btn-primary { background: #333; }
+.auth-modal:has(.login-role-selection) .btn-secondary { background: #e5e6e8; color: #333; border: 0; }
+.auth-modal:has(.login-role-selection) .forgot-password { font-size: 20px; margin-top: 26px; }
 
 .subtitle {
   color: #666;

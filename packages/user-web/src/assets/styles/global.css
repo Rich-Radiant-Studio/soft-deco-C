@@ -23,3 +23,76 @@ textarea,
 select {
     letter-spacing: 0 !important;
 }
+
+/* 个人中心页面统一的外层尺寸与布局基线 */
+.profile-page {
+    min-height: 100vh;
+}
+.profile-page > main {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    min-height: 740px !important;
+    box-sizing: border-box;
+}
+.profile-page > main > aside {
+    flex: 0 0 185px;
+    box-sizing: border-box;
+}
+.profile-page > main > aside,
+.account-overview-page .account-sidebar,
+.requests-page .account-sidebar,
+.orders-page .account-sidebar {
+    width: 185px !important;
+    min-width: 185px !important;
+    flex-basis: 185px !important;
+}
+.profile-page > main > section {
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+/* 个人中心各页面（含历史独立实现）统一外层网格 */
+.account-overview-page > .profile-shell,
+.requests-page > .requests-shell,
+.orders-page > .orders-shell {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    min-height: 740px !important;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+.account-overview-page .account-sidebar,
+.requests-page .account-sidebar,
+.orders-page .account-sidebar {
+    width: 185px !important;
+    flex: 0 0 185px !important;
+    box-sizing: border-box;
+}
+.account-overview-page .profile-content,
+.requests-page .requests-content,
+.orders-page .orders-content {
+    min-width: 0;
+    flex: 1;
+    box-sizing: border-box;
+}
+.account-overview-page .profile-content > *,
+.requests-page .requests-content > *,
+.orders-page .orders-content > *,
+.orders-page .orders-panel {
+    width: 100%;
+    max-width: none !important;
+    box-sizing: border-box;
+}
+
+@media (max-width: 800px) {
+    .profile-page > main {
+        min-height: 0;
+    }
+    .profile-page > main > aside {
+        flex-basis: auto;
+    }
+}

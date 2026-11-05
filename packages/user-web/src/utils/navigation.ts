@@ -1,3 +1,5 @@
+import { getAdminSsoConfig, getConfiguredAdminSsoUrl } from './adminSso'
+
 /**
  * 跨应用导航工具
  * 用于子应用与主应用之间的路由跳转
@@ -81,14 +83,16 @@ const navigateToAdminLogin = () => {
   }
 
   // 独立运行时需由部署环境配置管理端 origin。
-  const adminBaseUrl = (import.meta.env.VITE_ADMIN_BASE_URL || '').trim().replace(/\/+$/, '')
+  const { baseUrl: adminBaseUrl } = getAdminSsoConfig()
   if (!adminBaseUrl) {
     console.error('独立运行 C 端时必须配置 VITE_ADMIN_BASE_URL')
     window.alert('管理端地址尚未配置，请联系管理员。')
     return
   }
 
-  window.location.replace(new URL('/login', adminBaseUrl).toString())
+  // 后端 SSO 契约未确认前不附带 token；配置回调后由后台自行建立会话。
+  const ssoUrl = getConfiguredAdminSsoUrl()
+  window.location.replace(ssoUrl || new URL('/login', adminBaseUrl).toString())
 }
 
 /**
