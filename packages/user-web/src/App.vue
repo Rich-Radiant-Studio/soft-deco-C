@@ -24,7 +24,11 @@ import GuestWelcomeModal from './components/GuestWelcomeModal.vue'
   padding: 0;
 }
 
-body {
+ .profile-page-shell { display:flex; width:100%; min-height:calc(100vh - 135px); background:#f4f4f5; }
+ .profile-page-content { flex:1; min-width:0; box-sizing:border-box; }
+ @media (max-width:900px) { .profile-page-shell { flex-direction:column; } }
+
+ body {
   margin: 0;
   padding: 0;
   width: 100%;

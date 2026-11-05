@@ -3,27 +3,7 @@
     <Header />
 
     <main class="profile-shell">
-      <aside class="account-sidebar" aria-label="Personal center navigation">
-        <div class="profile-user">
-          <div class="profile-avatar placeholder-avatar" aria-label="Default user avatar"><i class="bi bi-person" aria-hidden="true"></i></div>
-          <h1>{{ profile.name }}</h1>
-          <p class="profile-email">{{ profile.email }}</p>
-          <p class="profile-balance">Balance: {{ profile.balance }}</p>
-        </div>
-
-        <nav class="profile-nav">
-          <router-link
-            v-for="item in sidebarItems"
-            :key="item.label"
-            :to="item.to"
-            class="sidebar-link"
-            :class="{ active: item.active }"
-          >
-            <i :class="['bi', item.icon]" aria-hidden="true"></i>
-            <span>{{ item.label }}</span>
-          </router-link>
-        </nav>
-      </aside>
+      <ProfileSidebar />
 
       <section class="account-content">
         <div class="last-login">Last login: January 3, 2026 14:30</div>
@@ -54,7 +34,7 @@
                   <th>Product</th>
                   <th>Amount</th>
                   <th>Status</th>
-                  <th>Order Date</th>
+                  <th>下单日期</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -88,7 +68,7 @@
 
         <section id="favorites" class="panel favorites-panel">
           <div class="panel-heading favorites-heading">
-            <h2>My Favorites</h2>
+            <h2>我的收藏</h2>
           </div>
           <div v-if="favorites.length" class="favorites-grid">
             <article v-for="product in favorites" :key="product.name" class="favorite-card">
@@ -97,8 +77,8 @@
                 <h3 :title="product.name">{{ product.name }}</h3>
                 <p class="favorite-price">{{ product.price }}</p>
                 <div class="favorite-actions">
-                  <button type="button" class="button-outline">Add to cart</button>
-                  <button type="button" class="button-primary">Buy now</button>
+                  <button type="button" class="button-outline">加入购物车</button>
+                  <button type="button" class="button-primary">立即购买</button>
                 </div>
               </div>
             </article>
@@ -120,6 +100,7 @@
 
 <script setup lang="ts">
 import Header from '@/components/Header.vue'
+import ProfileSidebar from '@/components/ProfileSidebar.vue'
 
 const profile = {
   name: 'Mia Wu',
@@ -127,20 +108,6 @@ const profile = {
   balance: '$100,234.00',
   avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Mia-Wu'
 }
-
-const sidebarItems = [
-  { label: 'Account Overview', icon: 'bi-person', to: '/profile', active: true },
-  { label: 'My Requests', icon: 'bi-journal-check', to: '/profile/requests' },
-  { label: 'My Orders', icon: 'bi-receipt', to: '/profile/orders' },
-  { label: 'After-sales Orders', icon: 'bi-file-earmark-text', to: '/profile/orders?tab=after-sales' },
-  { label: 'My Transactions', icon: 'bi-currency-exchange', to: '/profile/transactions' },
-  { label: 'My Favorites', icon: 'bi-star', to: '/profile/favorites' },
-  { label: 'Platform Recommendations', icon: 'bi-heart', to: '/shop' },
-  { label: 'Shipping Address', icon: 'bi-geo-alt', to: '/profile/addresses' },
-  { label: 'Payment Methods', icon: 'bi-credit-card', to: '/profile/payment-methods' },
-  { label: 'Account Settings', icon: 'bi-folder2', to: '/profile/settings' },
-  { label: 'Log Out', icon: 'bi-power', to: '/login' }
-]
 
 const orderStats = [
   { count: 1, label: 'Pending Payment', icon: 'bi-currency-dollar', tone: 'red' },
@@ -178,40 +145,32 @@ const favorites = [
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Match the compact two-tier desktop header in the reference. */
-.account-overview-page :deep(.top-nav-bar) { padding: 2px 0; }
-.account-overview-page :deep(.main-header) { padding: 6px 0; }
-.account-overview-page :deep(.top-nav-bar .container-fluid),
-.account-overview-page :deep(.main-header .container-fluid) { padding-left: 14px !important; padding-right: 14px !important; }
-.account-overview-page :deep(.navbar-brand) { width: 80px; font-family: Georgia, 'Times New Roman', serif; }
-.account-overview-page :deep(.main-nav) { gap: clamp(16px, 2vw, 30px); }
-.account-overview-page :deep(.right-section) { gap: clamp(18px, 2.5vw, 34px); }
-.account-overview-page :deep(.search-wrapper) { width: clamp(220px, 31vw, 338px); }
-
 .profile-shell {
   flex: 1 0 auto;
   display: flex;
-  min-height: calc(100vh - 172px);
+  width: 100%;
+  min-height: 740px;
   background: #f4f4f5;
 }
 
 .account-sidebar {
-  flex: 0 0 170px;
-  width: 170px;
+  flex: 0 0 185px;
+  width: 185px;
+  min-width: 185px;
   background: #fff;
   border-right: 1px solid #eceef1;
-  padding: 15px 6px 18px;
+  padding: 16px 7px 18px;
 }
 
 .profile-user {
   text-align: center;
-  padding: 0 4px 13px;
+  padding: 0 4px 17px;
 }
 
 .profile-avatar {
   display: block;
-  width: 60px;
-  height: 60px;
+  width: 66px;
+  height: 66px;
   margin: 0 auto 5px;
   border: 2px solid #d8e6f3;
   border-radius: 50%;
@@ -221,7 +180,7 @@ const favorites = [
 .placeholder-avatar { display: grid; place-items: center; color: #fff; background: #cdd2da; border-color: #d7dbe2; }
 .placeholder-avatar i { font-size: 29px; }
 
-.profile-user h1 { margin: 0 0 4px; font-size: 17px; line-height: 21px; font-weight: 700; }
+.profile-user h1 { margin: 5px 0; font-size: 20px; line-height: 24px; font-weight: 700; }
 .profile-email, .profile-balance { margin: 0 0 4px; color: #666; font-size: 10px; line-height: 15px; white-space: nowrap; }
 .profile-balance { margin-bottom: 0; font-size: 11px; }
 
@@ -230,11 +189,11 @@ const favorites = [
   display: flex;
   align-items: center;
   gap: 11px;
-  min-height: 30px;
-  padding: 0 9px;
+  min-height: 34px;
+  padding: 0 11px;
   border-radius: 4px;
   color: #33383d;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.2;
   text-decoration: none;
   white-space: nowrap;
@@ -249,7 +208,7 @@ const favorites = [
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 12px 10px 14px;
+  padding: 14px 10px 14px;
 }
 
 .last-login { min-height: 17px; color: #71757a; font-size: 11px; line-height: 17px; }
@@ -343,7 +302,7 @@ const favorites = [
 .account-footer { flex: 0 0 auto; min-height: 73px; display: grid; place-items: center; padding: 16px; background: #333; color: #aaa; font-size: 11px; text-align: center; }
 
 @media (max-width: 1100px) {
-  .account-sidebar { flex-basis: 160px; width: 160px; }
+  .account-sidebar { flex-basis: 185px; width: 185px; min-width: 185px; }
   .account-content { padding-right: 8px; padding-left: 8px; }
   .summary-grid, .favorites-grid { gap: 8px; }
   .summary-card { gap: 7px; padding: 9px; }
@@ -369,7 +328,6 @@ const favorites = [
   .panel-heading h2 { font-size: 16px; }
   .last-login { font-size: 10px; }
   .account-footer { min-height: 60px; font-size: 10px; }
-  .account-overview-page :deep(.navbar-brand) { width: auto; }
-  .account-overview-page :deep(.search-wrapper) { width: 160px; }
+  
 }
 </style>

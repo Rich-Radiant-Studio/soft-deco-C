@@ -7,6 +7,7 @@
           <button class="btn btn-sm btn-register" type="button" @click="handleRegister">
             <i class="bi bi-person-plus-fill me-2"></i>{{ $t('nav.register') }}
           </button>
+          <button class="btn btn-sm btn-login" type="button" @click="handleLogin">登录</button>
           <LanguageSwitcher />
           <UserAvatar />
         </div>
@@ -74,21 +75,36 @@
         </div>
       </div>
     </header>
+    <AuthModal :visible="authVisible" :initial-mode="authMode" @update:visible="authVisible = $event" @login="onLogin" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { inject, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import LanguageSwitcher from './LanguageSwitcher.vue'
 import UserAvatar from './UserAvatar.vue'
 import AboutUsDropdown from './AboutUsDropdown.vue'
+import AuthModal from './AuthModal.vue'
 import { navigation } from '@/utils/navigation'
 import type { I18nPlugin } from '@/plugins/i18n'
 
 const i18n = inject<I18nPlugin>('i18n')
 const $t = (key: string) => i18n?.t(key) || key
+const router = useRouter()
 
-const handleRegister = () => navigation.toRegister()
+const authVisible = ref(false)
+const authMode = ref<'login' | 'register'>('login')
+const handleRegister = () => { authMode.value = 'register'; authVisible.value = true }
+const handleLogin = () => { authMode.value = 'login'; authVisible.value = true }
+const onLogin = (data: { role?: string }) => {
+  authVisible.value = false
+  if (data?.role === 'designer' || data?.role === 'supplier') {
+    navigation.toDashboard()
+    return
+  }
+  router.push('/profile')
+}
 
 // 购物车数量（示例）
 const cartCount = ref(0)
@@ -100,6 +116,8 @@ const cartCount = ref(0)
   background: #333333;
   color: white;
   padding: 8px 0;
+  min-height: 51px;
+  box-sizing: border-box;
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -124,10 +142,23 @@ const cartCount = ref(0)
   color: #FFFFFF;
 }
 
+.btn-login {
+  background: #0878b6;
+  border: 1px solid #0878b6;
+  color: #fff;
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn-login:hover { background: #056494; border-color: #056494; color: #fff; }
+
 /* Main Header - 白色背景区域 */
 .main-header {
   background: white;
   padding: 16px 0;
+  min-height: 84px;
+  box-sizing: border-box;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin-bottom: 0;
 }
