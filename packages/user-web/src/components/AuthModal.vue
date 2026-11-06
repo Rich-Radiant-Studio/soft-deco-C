@@ -378,7 +378,16 @@ const handleRegister = async () => {
     }
     if (registerForm.role === 'designer') Object.assign(body, { designerNature: registerForm.designerType, displayName: registerForm.designerName.trim(), roomTypes: registerForm.roomTypes })
     if (registerForm.role === 'supplier') Object.assign(body, { companyName: registerForm.companyName.trim(), contactPerson: registerForm.contactPerson.trim(), contactPhone: registerForm.contactPhone.trim(), street: registerForm.street.trim(), city: registerForm.city.trim(), state: registerForm.state.trim(), country: registerForm.country.trim() })
-    const response = await fetch(`${baseUrl}/app/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    // 游客升级注册需要携带当前游客会话，否则后端会将 guestId 视为无效凭据。
+    const guestToken = localStorage.getItem('token')
+    const response = await fetch(`${baseUrl}/app/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(guestToken ? { Authorization: `Bearer ${guestToken}` } : {})
+      },
+      body: JSON.stringify(body)
+    })
     const payload = await response.json().catch(() => ({}))
     if (!response.ok || (payload.code !== undefined && payload.code !== 0 && payload.code !== 200)) throw new Error(payload.msg || 'Registration failed')
     emit('register', { ...registerForm, response: payload })

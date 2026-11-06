@@ -107,7 +107,7 @@
               <!-- Price -->
               <div class="price-section">
                 <span class="current-price">
-                  <span class="currency-symbol">$</span><span class="price-number">{{ productPrice }}</span>
+                  <span class="currency-symbol">{{ currency === 'USD' ? '$' : currency }}</span><span class="price-number">{{ productPrice }}</span>
                 </span>
                 <span class="free-shipping">Free Shipping</span>
               </div>
@@ -170,23 +170,23 @@
                 <div class="price-details">
                   <div class="price-row">
                     <span class="label">Shipping:</span>
-                    <span class="value">$0</span>
+                    <span class="value">{{ currency === 'USD' ? '$' : currency }}{{ shippingFee }}</span>
                   </div>
                   <div class="price-row">
                     <span class="label">Tax:</span>
-                    <span class="value">${{ taxAmount }}</span>
+                    <span class="value">{{ currency === 'USD' ? '$' : currency }}{{ taxValue }}</span>
                   </div>
                   <div class="price-row">
                     <span class="label">Order Total:</span>
-                    <span class="value">${{ orderTotal }}</span>
+                    <span class="value">{{ currency === 'USD' ? '$' : currency }}{{ orderTotalValue }}</span>
                   </div>
                 </div>
               </div>
 
               <!-- Action Buttons -->
               <div class="action-buttons">
-                <button class="btn btn-add-cart">Add to Cart</button>
-                <button class="btn btn-buy-now">Buy Now</button>
+                <button class="btn btn-add-cart" :disabled="!selectedSkuId" @click="addToCart">Add to Cart</button>
+                <button class="btn btn-buy-now" :disabled="!selectedSkuId" @click="buyNow">Buy Now</button>
               </div>
             </div>
           </div>
@@ -237,6 +237,50 @@ const productImages = ref([
 ])
 
 const selectedImage = ref(productImages.value[0])
+const loading = ref(true)
+const loadError = ref('')
+const selectedSkuId = ref<string | number | undefined>()
+const currency = ref('USD')
+
+const apiFetch = async (path: string) => {
+  const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+  const token = localStorage.getItem('token')
+  const response = await fetch(`${baseUrl}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  if (!response.ok) throw new Error(`Request failed (${response.status})`)
+  const result = await response.json()
+  if (result.code !== 200 && result.code !== 0) throw new Error(result.msg || 'Request failed')
+  return result.data
+}
+const apiFetchPost = async (path: string, body: unknown) => {
+  const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+  const token = localStorage.getItem('token')
+  const response = await fetch(`${baseUrl}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify(body) })
+  if (!response.ok) throw new Error(`Request failed (${response.status})`)
+  const result = await response.json()
+  if (result.code !== 200 && result.code !== 0) throw new Error(result.msg || 'Request failed')
+  return result.data
+}
+
+async function loadProduct() {
+  const goodsId = String(route.params.id || '')
+  if (!goodsId) { loadError.value = 'Missing product ID'; loading.value = false; return }
+  try {
+    const [detail, quote] = await Promise.all([apiFetch(`/app/goods/${encodeURIComponent(goodsId)}`), apiFetch(`/app/goods/${encodeURIComponent(goodsId)}/quote`)])
+    productTitle.value = detail.name || productTitle.value
+    productSubtitle.value = detail.subtitle || ''
+    productDescription.value = detail.description || ''
+    currency.value = detail.currency || quote?.currency || 'USD'
+    productPrice.value = Number(quote?.salePrice || 0)
+    const images = detail.images?.length ? detail.images : productImages.value
+    productImages.value = images
+    selectedImage.value = images[0]
+    selectedSkuId.value = detail.defaultSkuId
+    colors.value = detail.groups?.find((group: any) => group.code === 'color')?.values?.map((name: string) => ({ name, value: name })) || colors.value
+    fabrics.value = detail.groups?.find((group: any) => group.code === 'material')?.values || fabrics.value
+    sizes.value = detail.groups?.find((group: any) => group.code === 'size')?.values || sizes.value
+    if (quote) { shippingFee.value = quote.shippingFee || '0'; taxValue.value = quote.tax || '0'; orderTotalValue.value = quote.total || quote.salePrice || '0' }
+  } catch (error: any) { loadError.value = error?.message || 'Unable to load product' } finally { loading.value = false }
+}
 
 // Color options
 const colors = ref([
@@ -246,6 +290,9 @@ const colors = ref([
   { name: 'Black', value: '#000000' }
 ])
 const selectedColor = ref('White')
+const shippingFee = ref('0')
+const taxValue = ref('0')
+const orderTotalValue = ref('0')
 
 // Fabric options
 const fabrics = ref(['Leather', 'Tech Fabric', 'Cotton Linen'])
@@ -314,11 +361,22 @@ const orderTotal = computed(() => (productPrice.value + parseFloat(taxAmount.val
 
 const $t = (key: string) => key
 
-onMounted(() => {
-  // Load product data based on route params if needed
-  const productId = route.params.id
-  console.log('Product ID:', productId)
-})
+async function loadReviews() {
+  const goodsId = String(route.params.id || '')
+  if (!goodsId) return
+  try {
+    const data = await apiFetch(`/app/goods/${encodeURIComponent(goodsId)}/reviews?filter=all&page=1&pageSize=10`)
+    allReviews.value = (data?.list || []).map((review: any) => ({ id: review.reviewId, username: review.displayName || 'Anonymous', avatar: review.avatarUrl || 'https://i.pravatar.cc/150?img=1', text: review.content || '', images: review.images || [] }))
+  } catch { /* keep empty fallback when reviews are unavailable */ }
+}
+async function addToCart() {
+  try { await apiFetchPost('/app/cart/items', { skuId: selectedSkuId.value, quantity: 1 }); alert('Added to cart') } catch (error: any) { alert(error?.message || 'Unable to add to cart') }
+}
+async function buyNow() {
+  try { await apiFetchPost('/app/checkout/drafts', { skuId: selectedSkuId.value, quantity: 1 }); alert('Checkout draft created') } catch (error: any) { alert(error?.message || 'Unable to start checkout') }
+}
+
+onMounted(() => { loadProduct(); loadReviews() })
 </script>
 
 <style scoped>

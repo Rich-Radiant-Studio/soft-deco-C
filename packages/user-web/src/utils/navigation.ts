@@ -1,4 +1,5 @@
-import { getAdminSsoConfig, getConfiguredAdminSsoUrl } from './adminSso'
+import { getAdminSsoConfig } from './adminSso'
+import { autoLoginGuest } from './guestAuth'
 
 /**
  * 跨应用导航工具
@@ -40,7 +41,7 @@ export const navigateToMainApp = (path: string, replace = false) => {
 }
 
 /**
- * 登出并跳转到登录页
+ * 登出并以游客身份返回首页
  * @param clearGuestAccount 是否清除游客账号
  */
 export const logoutAndNavigate = async (clearGuestAccount = false) => {
@@ -62,37 +63,86 @@ export const logoutAndNavigate = async (clearGuestAccount = false) => {
   }
   
   // 检查是否在微前端环境中
+  // 退出后保留游客账号，立即恢复当前游客会话，避免页面落到登录页。
+  if (!clearGuestAccount) {
+    await autoLoginGuest()
+  }
+
   if (window.parent && window.parent !== window) {
     // 发送登出消息给主应用
     window.parent.postMessage({
       type: 'LOGOUT',
-      clearGuestAccount
+      clearGuestAccount,
+      redirectPath: '/'
     }, '*')
+    // 明确要求宿主返回首页；LOGOUT 仅负责同步登录态。
+    window.parent.postMessage({ type: 'NAVIGATE', path: '/', replace: true }, '*')
   } else {
     // 独立运行时，直接跳转
-    window.location.href = '/login'
+    window.location.replace('/')
   }
 }
 
-/** 前往独立管理端登录页；不附带 C 端 token。 */
+/** 将 C 端 admin audience token 写入管理端 Cookie，并进入管理端。 */
+const writeAdminTokenCookie = (token: string, adminUrl: string): boolean => {
+  let adminHost = window.location.hostname
+  let secure = window.location.protocol === 'https:'
+  try {
+    const parsed = new URL(adminUrl, window.location.href)
+    adminHost = parsed.hostname
+    secure = parsed.protocol === 'https:'
+  } catch {
+    console.warn('管理端地址无效，使用当前页面域名写入 Cookie')
+  }
+
+  // 浏览器只接受当前主机或其父域名；完全不同域名必须由后端重定向 Set-Cookie。
+  const currentHost = window.location.hostname
+  const canSetDomain = adminHost === 'localhost' ||
+    currentHost === adminHost ||
+    currentHost.endsWith(`.${adminHost}`) ||
+    adminHost.endsWith(`.${currentHost}`)
+  if (!canSetDomain) {
+    console.error(`无法从 ${currentHost} 写入 ${adminHost} 的 Cookie；请由后端通过重定向/Set-Cookie 建立管理端会话。`)
+    window.alert('管理端与当前站点不在同一域名，无法直接共享登录状态，请联系管理员配置后端跳转。')
+    return false
+  }
+
+  const encoded = encodeURIComponent(token)
+  const attributes = ['Admin-Token=' + encoded, 'Path=/', 'SameSite=Lax']
+  if (secure) attributes.push('Secure')
+  if (adminHost !== 'localhost' && /^[a-zA-Z0-9.-]+$/.test(adminHost) && !/^\d+(?:\.\d+){3}$/.test(adminHost)) {
+    attributes.splice(1, 0, `Domain=${adminHost}`)
+  }
+  document.cookie = attributes.join('; ')
+  // Domain=localhost 在部分浏览器会被拒绝，回退为 host-only Cookie。
+  if (adminHost === 'localhost' && !document.cookie.split('; ').some(item => item.startsWith('Admin-Token='))) {
+    document.cookie = ['Admin-Token=' + encoded, 'Path=/', 'SameSite=Lax', ...(secure ? ['Secure'] : [])].join('; ')
+  }
+  return true
+}
+
 const navigateToAdminLogin = () => {
-  // 微前端宿主将 /admin/login 映射到管理端应用。
+  const token = localStorage.getItem('token')
+  if (!token) {
+    window.alert('请先登录 C 端账号')
+    return
+  }
+  const { baseUrl: adminBaseUrl } = getAdminSsoConfig()
+  const adminUrl = adminBaseUrl || window.location.origin
+  if (!writeAdminTokenCookie(token, adminUrl)) return
+
+  // 微前端宿主将 /admin/login 映射到管理端应用，保留既有消息协议。
   if (window.parent && window.parent !== window) {
     navigateToMainApp('/admin/login')
     return
   }
-
-  // 独立运行时需由部署环境配置管理端 origin。
-  const { baseUrl: adminBaseUrl } = getAdminSsoConfig()
   if (!adminBaseUrl) {
-    console.error('独立运行 C 端时必须配置 VITE_ADMIN_BASE_URL')
-    window.alert('管理端地址尚未配置，请联系管理员。')
+    // 本地/同源部署的管理端入口是登录路由；直接访问 /admin 会落到
+    // 管理端未注册的静态路径，从而被服务器返回 404。
+    window.location.replace('/admin/login')
     return
   }
-
-  // 后端 SSO 契约未确认前不附带 token；配置回调后由后台自行建立会话。
-  const ssoUrl = getConfiguredAdminSsoUrl()
-  window.location.replace(ssoUrl || new URL('/login', adminBaseUrl).toString())
+  window.location.replace(new URL('/admin/login', `${adminBaseUrl}/`).toString())
 }
 
 /**

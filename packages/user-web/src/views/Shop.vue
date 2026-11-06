@@ -84,9 +84,9 @@
                 <button class="filter-btn">$500-1000</button>
                 <button class="filter-btn">$1000-2000</button>
                 <button class="filter-btn">$2000+</button>
-                <input type="number" placeholder="Min" class="price-input">
-                <input type="number" placeholder="Max" class="price-input">
-                <button class="filter-apply-btn">Filter</button>
+                <input v-model="filters.minPrice" type="number" placeholder="Min" class="price-input">
+                <input v-model="filters.maxPrice" type="number" placeholder="Max" class="price-input">
+                <button class="filter-apply-btn" @click="page = 1; loadProducts()">Filter</button>
               </div>
             </div>
 
@@ -181,13 +181,16 @@
                 <button class="filter-btn">Full</button>
                 <button class="filter-btn">Queen</button>
                 <button class="filter-btn">King</button>
-                <button class="reset-btn">Reset</button>
+                <button class="reset-btn" @click="resetFilters">Reset</button>
               </div>
             </div>
           </div>
 
           <!-- Product Grid -->
-          <div class="product-grid">
+          <div v-if="loading" class="shop-state">Loading products...</div>
+          <div v-else-if="error" class="shop-state error">{{ error }}</div>
+          <div v-else-if="!products.length" class="shop-state">No products found.</div>
+          <div v-else class="product-grid">
             <router-link :to="`/product/${product.id}`" class="product-card-link" v-for="product in products" :key="product.id">
               <div class="product-card">
                 <div class="product-image">
@@ -197,8 +200,8 @@
                   <div class="product-header">
                     <p class="product-category">{{ product.category }}</p>
                     <h3 class="product-price">
-                      <span class="price-symbol">$</span>
-                      <span class="price-amount">{{ product.price.replace('$', '') }}</span>
+                      <span class="price-symbol">{{ product.currency === 'USD' ? '$' : product.currency }}</span>
+                      <span class="price-amount">{{ product.price }}</span>
                     </h3>
                   </div>
                   <h4 class="product-name">{{ product.name }}</h4>
@@ -206,6 +209,11 @@
                 </div>
               </div>
             </router-link>
+          </div>
+          <div v-if="total > pageSize" class="pagination">
+            <button :disabled="page <= 1" @click="page--; loadProducts()">Previous</button>
+            <span>Page {{ page }} / {{ totalPages }}</span>
+            <button :disabled="page >= totalPages" @click="page++; loadProducts()">Next</button>
           </div>
         </main>
       </div>
@@ -220,18 +228,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import Header from '@/components/Header.vue'
 import Footer from '@/components/Footer.vue'
 import FloatingActionButtons from '@/components/FloatingActionButtons.vue'
 
 interface Product {
-  id: number
+  id: number | string
   category: string
   price: string
   name: string
   description: string
   image: string
+  currency?: string
 }
 
 const products = ref<Product[]>([
@@ -332,6 +341,36 @@ const products = ref<Product[]>([
     image: 'https://images.unsplash.com/photo-1600210491892-03d54c0aaf87?w=400&h=300&fit=crop&q=80'
   }
 ])
+
+const loading = ref(true)
+const error = ref('')
+const page = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
+const filters = ref<Record<string, string>>({})
+
+async function loadProducts() {
+  loading.value = true
+  error.value = ''
+  try {
+    const params = new URLSearchParams({ page: String(page.value), pageSize: String(pageSize.value), sort: 'default' })
+    Object.entries(filters.value).forEach(([key, value]) => value && params.set(key, value))
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+    const token = localStorage.getItem('token')
+    const response = await fetch(`${baseUrl}/app/shop/goods?${params}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+    if (!response.ok) throw new Error(`Request failed (${response.status})`)
+    const result = await response.json()
+    if (result.code !== 200 && result.code !== 0) throw new Error(result.msg || 'Unable to load products')
+    const data = result.data || {}
+    products.value = (data.list || []).map((item: any) => ({ id: item.goodsId, category: item.category || '', price: String(item.price ?? ''), currency: item.currency || 'USD', name: item.name || '', description: item.description || '', image: item.image || '' }))
+    total.value = Number(data.total || 0)
+    page.value = Number(data.page || page.value)
+    pageSize.value = Number(data.pageSize || pageSize.value)
+  } catch (err: any) { error.value = err?.message || 'Unable to load products' } finally { loading.value = false }
+}
+function resetFilters() { filters.value = {}; page.value = 1; loadProducts() }
+onMounted(loadProducts)
 
 // 筛选展开状态
 const expandedFilters = ref({

@@ -80,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref } from 'vue'
+import { inject, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import LanguageSwitcher from './LanguageSwitcher.vue'
 import UserAvatar from './UserAvatar.vue'
@@ -106,8 +106,19 @@ const onLogin = (data: { role?: string }) => {
   router.push('/profile')
 }
 
-// 购物车数量（示例）
+// 购物车数量
 const cartCount = ref(0)
+const loadCartCount = async () => {
+  try {
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+    const token = localStorage.getItem('token')
+    const response = await fetch(`${baseUrl}/app/cart/count`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+    if (!response.ok) return
+    const result = await response.json()
+    if (result.code === 200 || result.code === 0) cartCount.value = Number(result.data?.quantity || 0)
+  } catch { /* keep zero when the cart endpoint is unavailable */ }
+}
+onMounted(loadCartCount)
 </script>
 
 <style scoped>

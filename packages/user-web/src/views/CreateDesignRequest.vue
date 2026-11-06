@@ -393,7 +393,7 @@
           <!-- Action Buttons -->
           <div class="action-buttons">
             <button class="submit-btn" @click="handleSubmit">Submit Design Request</button>
-            <button class="draft-btn">Save as Draft</button>
+            <button class="draft-btn" @click="saveDraft">Save as Draft</button>
           </div>
         </div>
       </div>
@@ -604,7 +604,7 @@ const toggleTag = (tag: string) => {
 }
 
 // Handle submit
-const handleSubmit = () => {
+const handleSubmit = async () => {
   // Get selected room type
   const room = selectedRooms.value[0] || ''
   
@@ -616,6 +616,13 @@ const handleSubmit = () => {
     tier = selectedTier.value
   }
   
+  try {
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+    const token = localStorage.getItem('token')
+    const response = await fetch(`${baseUrl}/app/design-request`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ room, tier, rooms: selectedRooms.value, styles: selectedStyles.value, colors: selectedColors.value, tags: selectedTags.value, customTag: customTag.value }) })
+    const result = await response.json()
+    if (!response.ok || (result.code !== 200 && result.code !== 0)) throw new Error(result.msg || 'Unable to submit request')
+  } catch (error: any) { alert(error?.message || 'Unable to submit request'); return }
   // Navigate to payment page with query params
   router.push({
     path: '/pay-design-fee',
@@ -626,10 +633,33 @@ const handleSubmit = () => {
   })
 }
 
+const saveDraft = async () => {
+  const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+  const token = localStorage.getItem('token')
+  try {
+    const response = await fetch(`${baseUrl}/app/design-request/draft`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ rooms: selectedRooms.value, styles: selectedStyles.value, colors: selectedColors.value, tags: selectedTags.value, customTag: customTag.value, budget: selectedBudget.value, tier: selectedTier.value }) })
+    const result = await response.json()
+    if (!response.ok || (result.code !== 200 && result.code !== 0)) throw new Error(result.msg || 'Unable to save draft')
+    alert('Draft saved')
+  } catch (error: any) { alert(error?.message || 'Unable to save draft') }
+}
+
 // Handle select floating label
 import { onMounted } from 'vue'
 
 onMounted(() => {
+  const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+  const token = localStorage.getItem('token')
+  fetch(`${baseUrl}/app/design-request/draft`, { headers: token ? { Authorization: `Bearer ${token}` } : {} }).then(r => r.json()).then(result => {
+    const draft = result?.data
+    if (draft) {
+      selectedRooms.value = draft.rooms || selectedRooms.value
+      selectedStyles.value = draft.styles || selectedStyles.value
+      selectedColors.value = draft.colors || selectedColors.value
+      selectedTags.value = draft.tags || selectedTags.value
+      customTag.value = draft.customTag || customTag.value
+    }
+  }).catch(() => {})
   const selectElements = document.querySelectorAll('select.form-input')
   selectElements.forEach((select) => {
     const updateLabel = () => {
