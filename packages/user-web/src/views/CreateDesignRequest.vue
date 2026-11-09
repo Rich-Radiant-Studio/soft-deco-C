@@ -417,14 +417,14 @@ import CalendarIcon from '@/components/CalendarIcon.vue'
 const router = useRouter()
 
 // Room types
-const roomTypes = ['Bathroom', 'Living Room', 'Bedroom', 'Dining Room', 'Balcony', 'Whole House']
+const roomTypes = ref<string[]>(['Bathroom', 'Living Room', 'Bedroom', 'Dining Room', 'Balcony', 'Whole House'])
 const selectedRooms = ref<string[]>([])
 
 // Check if Whole House is selected
 const isWholeHouseSelected = computed(() => selectedRooms.value.includes('Whole House'))
 
 // Style options
-const styleOptions = ['Modern', 'Minimalist', 'Nordic', 'Chinese', 'Japanese', 'Industrial', 'Mediterranean', 'Vintage']
+const styleOptions = ref<string[]>(['Modern', 'Minimalist', 'Nordic', 'Chinese', 'Japanese', 'Industrial', 'Mediterranean', 'Vintage'])
 const selectedStyles = ref<string[]>([])
 
 // Color palette
@@ -456,7 +456,7 @@ const budgetRanges = [
 const selectedBudget = ref('')
 
 // Design tags
-const designTags = ['Cozy', 'Bright', 'Spacious', 'Modern', 'Classic', 'Functional', 'Top', 'Big', 'Top']
+const designTags = ref<string[]>(['Cozy', 'Bright', 'Spacious', 'Modern', 'Classic', 'Functional', 'Top', 'Big'])
 const selectedTags = ref<string[]>([])
 const customTag = ref('')
 
@@ -619,7 +619,8 @@ const handleSubmit = async () => {
   try {
     const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
     const token = localStorage.getItem('token')
-    const response = await fetch(`${baseUrl}/app/design-request`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ room, tier, rooms: selectedRooms.value, styles: selectedStyles.value, colors: selectedColors.value, tags: selectedTags.value, customTag: customTag.value }) })
+    const idempotencyKey = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+    const response = await fetch(`${baseUrl}/app/design-request`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey, ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ room, tier, rooms: selectedRooms.value, styles: selectedStyles.value, colors: selectedColors.value, tags: selectedTags.value, customTag: customTag.value }) })
     const result = await response.json()
     if (!response.ok || (result.code !== 200 && result.code !== 0)) throw new Error(result.msg || 'Unable to submit request')
   } catch (error: any) { alert(error?.message || 'Unable to submit request'); return }
@@ -650,6 +651,16 @@ import { onMounted } from 'vue'
 onMounted(() => {
   const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
   const token = localStorage.getItem('token')
+  fetch(`${baseUrl}/app/design-request/options`, { headers: token ? { Authorization: `Bearer ${token}` } : {} }).then(r => r.json()).then(result => {
+    const options = result?.data?.options || result?.data || result
+    const values = (value: unknown) => Array.isArray(value) ? value.map(item => typeof item === 'string' ? item : (item as any)?.name || (item as any)?.label || (item as any)?.value).filter(Boolean) : []
+    const rooms = values(options?.rooms || options?.roomTypes)
+    const styles = values(options?.styles || options?.styleOptions)
+    const tags = values(options?.tags || options?.designTags)
+    if (rooms.length) roomTypes.value = rooms
+    if (styles.length) styleOptions.value = styles
+    if (tags.length) designTags.value = [...new Set(tags)]
+  }).catch(() => {})
   fetch(`${baseUrl}/app/design-request/draft`, { headers: token ? { Authorization: `Bearer ${token}` } : {} }).then(r => r.json()).then(result => {
     const draft = result?.data
     if (draft) {
