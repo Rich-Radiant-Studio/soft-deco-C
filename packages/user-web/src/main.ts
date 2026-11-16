@@ -31,25 +31,33 @@ if (import.meta.env.DEV) {
   console.log('Router 已挂载到 window.$router')
 }
 
-// 挂载应用
-app.mount('#app')
-
 // 初始化默认语言
 const savedLocale = localStorage.getItem('user-web-locale') || 'zh'
 i18nPlugin.switchLocale(savedLocale)
 
-// 游客自动登录
-console.log('开始游客自动登录...')
-void autoLoginGuest()
+// 在首次挂载前完成一次认证恢复/游客会话初始化，避免首页鉴权请求抢跑。
+// 最长等待 8 秒；失败时仍继续渲染，由现有页面降级体验承接。
+const bootstrap = async () => {
+  const guestAuthReady = Promise.race([
+    autoLoginGuest(),
+    new Promise<boolean>((resolve) => window.setTimeout(() => resolve(false), 8000)),
+  ])
+  await guestAuthReady
 
-// 后台探测 API 可用性，不阻塞页面渲染或游客登录流程。
-void checkApiHealth().then((healthy) => {
-  if (!healthy) {
-    console.warn('[API] 健康检查失败，后续请求可能不可用')
-  }
-})
+  // 挂载应用
+  app.mount('#app')
 
-console.log('user-web 应用启动完成')
+  // 后台探测 API 可用性，不阻塞页面渲染或游客登录流程。
+  void checkApiHealth().then((healthy) => {
+    if (!healthy) {
+      console.warn('[API] 健康检查失败，后续请求可能不可用')
+    }
+  })
+
+  console.log('user-web 应用启动完成')
+}
+
+void bootstrap()
 
 // 导出插件实例供其他模块使用
 export { i18nPlugin }

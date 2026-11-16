@@ -44,13 +44,13 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/payment-success',
-    component: () => import('@/views/PaymentSuccess.vue'),
-    meta: { title: '支付成功' }
+    component: () => import('@/views/PaymentResult.vue'),
+    meta: { title: '支付状态' }
   },
   {
     path: '/payment-failed',
-    component: () => import('@/views/PaymentFailed.vue'),
-    meta: { title: '支付失败' }
+    component: () => import('@/views/PaymentResult.vue'),
+    meta: { title: '支付状态' }
   },
   {
     path: '/profile',
@@ -167,6 +167,11 @@ const routes: RouteRecordRaw[] = [
     path: '/buy-now/:type',
     component: () => import('@/views/Profile.vue'),
     meta: { title: '立即购买' }
+  },
+  {
+    path: '/checkout/drafts/:draftId',
+    component: () => import('@/views/CheckoutDraft.vue'),
+    meta: { title: '立即购买确认' }
   }
 ]
 

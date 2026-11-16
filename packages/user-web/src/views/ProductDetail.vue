@@ -112,8 +112,13 @@
                 <span class="free-shipping">Free Shipping</span>
               </div>
 
-              <!-- Color Selection -->
-              <div class="option-group">
+              <div v-for="group in groups" :key="group.code" class="option-group">
+                <label class="option-label">{{ group.name }}:</label>
+                <div class="fabric-options"><button v-for="value in group.values" :key="value" class="fabric-btn" :class="{ active: selectedOptions[group.code] === value }" @click="selectOption(group.code, value)">{{ value }}</button></div>
+              </div>
+              <p v-if="quoteLoading">Loading price…</p><p v-if="quoteError" class="error">{{ quoteError }}</p>
+              <!-- Legacy static option blocks are disabled; dynamic groups above are authoritative. -->
+              <div v-if="false" class="option-group">
                 <label class="option-label">Select Color:</label>
                 <div class="color-options">
                   <button 
@@ -129,7 +134,7 @@
               </div>
 
               <!-- Fabric Selection -->
-              <div class="option-group">
+              <div v-if="false" class="option-group">
                 <label class="option-label">Select Fabric:</label>
                 <div class="fabric-options">
                   <button 
@@ -145,7 +150,7 @@
               </div>
 
               <!-- Size Selection -->
-              <div class="option-group">
+              <div v-if="false" class="option-group">
                 <label class="option-label">Select Size:</label>
                 <div class="size-options">
                   <button 
@@ -186,7 +191,7 @@
               <!-- Action Buttons -->
               <div class="action-buttons">
                 <button class="btn btn-add-cart" :disabled="!selectedSkuId" @click="addToCart">Add to Cart</button>
-                <button class="btn btn-buy-now" :disabled="!selectedSkuId" @click="buyNow">Buy Now</button>
+                <button class="btn btn-buy-now" :disabled="!selectedSkuId || creatingCheckout" @click="buyNow">{{ creatingCheckout ? 'Creating…' : 'Buy Now' }}</button>
               </div>
             </div>
           </div>
@@ -212,75 +217,47 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import Header from '@/components/Header.vue'
 import Footer from '@/components/Footer.vue'
 import FloatingActionButtons from '@/components/FloatingActionButtons.vue'
 import ReviewModal from '@/components/ReviewModal.vue'
 import { useLockScroll } from '@/composables/useLockScroll'
+import { addCartItem } from '@/api/cart'
+import { getCustomerAuthState } from '@/utils/customerAuth'
+import { createCheckoutDraft } from '@/api/checkout'
+import { getGoodsDetail, getGoodsQuote, getGoodsReviews, type GoodsDetail, type GoodsSku, type GoodsQuote } from '@/api/goods'
 
 const route = useRoute()
+const router = useRouter()
 
 // Product data
-const productTitle = ref('全木茶几')
-const productSubtitle = ref('Modern sofa design with memory foam')
-const productPrice = ref(1405)
-const productDescription = ref('Experience luxurious comfort with our signature Cloud Sofa. This sofa uniquely blends modern aesthetics with exceptional comfort, featuring high-density memory foam that adapts to your body while maintaining its shape. The soft, breathable fabric ensures year-round comfort, while the sturdy wooden frame guarantees long-lasting quality.')
+const productTitle = ref('')
+const productSubtitle = ref('')
+const productPrice = ref('')
+const productDescription = ref('')
 
-const productImages = ref([
-  'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&h=600&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=800&h=600&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=800&h=600&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=800&h=600&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&h=600&fit=crop&q=80'
-])
+const placeholderImage = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="600"%3E%3Crect width="100%25" height="100%25" fill="%23eee"/%3E%3C/svg%3E'
+const productImages = ref<string[]>([])
 
 const selectedImage = ref(productImages.value[0])
 const loading = ref(true)
 const loadError = ref('')
 const selectedSkuId = ref<string | number | undefined>()
+const creatingCheckout = ref(false)
 const currency = ref('USD')
+const detail = ref<GoodsDetail | null>(null)
+const groups = computed(() => detail.value?.groups || [])
+const selectedOptions = ref<Record<string, string>>({})
+const skus = ref<GoodsSku[]>([])
+const currentSku = computed(() => skus.value.find(sku => Object.entries(selectedOptions.value).every(([code, value]) => sku.options?.[code] === value) && groups.value.every(group => Boolean(sku.options?.[group.code]))))
+const quote = ref<GoodsQuote | null>(null)
+const quoteLoading = ref(false), quoteError = ref('')
+let quoteSequence = 0, detailSequence = 0
 
-const apiFetch = async (path: string) => {
-  const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
-  const token = localStorage.getItem('token')
-  const response = await fetch(`${baseUrl}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
-  if (!response.ok) throw new Error(`Request failed (${response.status})`)
-  const result = await response.json()
-  if (result.code !== 200 && result.code !== 0) throw new Error(result.msg || 'Request failed')
-  return result.data
-}
-const apiFetchPost = async (path: string, body: unknown) => {
-  const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
-  const token = localStorage.getItem('token')
-  const response = await fetch(`${baseUrl}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify(body) })
-  if (!response.ok) throw new Error(`Request failed (${response.status})`)
-  const result = await response.json()
-  if (result.code !== 200 && result.code !== 0) throw new Error(result.msg || 'Request failed')
-  return result.data
-}
-
-async function loadProduct() {
-  const goodsId = String(route.params.id || '')
-  if (!goodsId) { loadError.value = 'Missing product ID'; loading.value = false; return }
-  try {
-    const [detail, quote] = await Promise.all([apiFetch(`/app/goods/${encodeURIComponent(goodsId)}`), apiFetch(`/app/goods/${encodeURIComponent(goodsId)}/quote`)])
-    productTitle.value = detail.name || productTitle.value
-    productSubtitle.value = detail.subtitle || ''
-    productDescription.value = detail.description || ''
-    currency.value = detail.currency || quote?.currency || 'USD'
-    productPrice.value = Number(quote?.salePrice || 0)
-    const images = detail.images?.length ? detail.images : productImages.value
-    productImages.value = images
-    selectedImage.value = images[0]
-    selectedSkuId.value = detail.defaultSkuId
-    colors.value = detail.groups?.find((group: any) => group.code === 'color')?.values?.map((name: string) => ({ name, value: name })) || colors.value
-    fabrics.value = detail.groups?.find((group: any) => group.code === 'material')?.values || fabrics.value
-    sizes.value = detail.groups?.find((group: any) => group.code === 'size')?.values || sizes.value
-    if (quote) { shippingFee.value = quote.shippingFee || '0'; taxValue.value = quote.tax || '0'; orderTotalValue.value = quote.total || quote.salePrice || '0' }
-  } catch (error: any) { loadError.value = error?.message || 'Unable to load product' } finally { loading.value = false }
-}
+async function loadQuote(goodsId: string, skuId?: string) { const seq=++quoteSequence; quoteLoading.value=true;quoteError.value='';quote.value=null;selectedSkuId.value=undefined;productPrice.value='';shippingFee.value='';taxValue.value='';orderTotalValue.value='';try{const result=await getGoodsQuote(goodsId,skuId);if(seq!==quoteSequence)return;quote.value=result;currency.value=result.currency||detail.value?.currency||'';productPrice.value=result.salePrice;shippingFee.value=result.shippingFee;taxValue.value=result.tax;orderTotalValue.value=result.total;if(result.sellable&&result.priceAvailable&&skuId)selectedSkuId.value=skuId}catch(e){if(seq===quoteSequence)quoteError.value=e instanceof Error?e.message:'Quote unavailable'}finally{if(seq===quoteSequence)quoteLoading.value=false} }
+async function loadProduct() { const goodsId=String(route.params.id||'');const seq=++detailSequence;loading.value=true;loadError.value='';detail.value=null;quote.value=null;productImages.value=[];selectedImage.value='';selectedSkuId.value=undefined;skus.value=[];if(!goodsId){loadError.value='Missing product ID';loading.value=false;return}try{const value=await getGoodsDetail(goodsId);if(seq!==detailSequence)return;detail.value=value;productTitle.value=value.name;productSubtitle.value=value.subtitle||'';productDescription.value=value.description||'';currency.value=value.currency||'';productImages.value=(value.images||[]).filter(Boolean);selectedImage.value=productImages.value[0]||placeholderImage;skus.value=value.skus||[];const sku=skus.value.find(x=>x.skuId===String(value.defaultSkuId))||null;if(sku){selectedOptions.value={...(sku.options||{})};await loadQuote(goodsId,sku.skuId)}else await loadQuote(goodsId)}catch(e){if(seq===detailSequence)loadError.value=e instanceof Error?e.message:'Unable to load product'}finally{if(seq===detailSequence)loading.value=false} }
+function selectOption(groupCode:string,value:string){selectedOptions.value={...selectedOptions.value,[groupCode]:value};const match=skus.value.find(sku=>groups.value.every(group=>Boolean(sku.options?.[group.code])&&sku.options?.[group.code]===selectedOptions.value[group.code]));if(!match){quoteSequence++;quote.value=null;selectedSkuId.value=undefined;quoteError.value='This specification combination is unavailable.';return}const images=match.images?.filter(Boolean);if(images?.length){productImages.value=images;selectedImage.value=images[0]}void loadQuote(String(detail.value?.goodsId||''),match.skuId)}
 
 // Color options
 const colors = ref([
@@ -303,34 +280,7 @@ const sizes = ref(['1-Seater', '2-Seater', '3-Seater'])
 const selectedSize = ref('1-Seater')
 
 // Reviews - 所有评论数据
-const allReviews = ref([
-  {
-    id: 1,
-    username: 'Username',
-    avatar: 'https://i.pravatar.cc/150?img=1',
-    text: 'I recently purchased bedroom furniture and I\'m very satisfied! The gray metal frame is both stylish and has a soft touch. The craftsmanship of the headboard is very elegant, and the black bracket is super sturdy. The assembly is very simple, the husband and I took about 45 minutes. The only minor drawback is that the bed board is a bit thinner than I expected, but at this price point, it\'s definitely the most cost-effective choice I\'ve found. I have already recommended it to my friends!',
-    images: [
-      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=200&h=150&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=200&h=150&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=200&h=150&fit=crop&q=80'
-    ]
-  },
-  {
-    id: 2,
-    username: 'Username',
-    avatar: 'https://i.pravatar.cc/150?img=2',
-    text: 'The furniture quality is excellent and the design is beautiful. Highly recommended!',
-    images: []
-  },
-  // 生成更多模拟评论数据以达到1000条
-  ...Array.from({ length: 998 }, (_, i) => ({
-    id: i + 3,
-    username: 'Username',
-    avatar: `https://i.pravatar.cc/150?img=${(i % 70) + 1}`,
-    text: 'Great product! Very satisfied with the quality and design.',
-    images: []
-  }))
-])
+const allReviews = ref<any[]>([])
 
 // 实际评论总数
 const totalReviews = computed(() => allReviews.value.length)
@@ -365,15 +315,20 @@ async function loadReviews() {
   const goodsId = String(route.params.id || '')
   if (!goodsId) return
   try {
-    const data = await apiFetch(`/app/goods/${encodeURIComponent(goodsId)}/reviews?filter=all&page=1&pageSize=10`)
-    allReviews.value = (data?.list || []).map((review: any) => ({ id: review.reviewId, username: review.displayName || 'Anonymous', avatar: review.avatarUrl || 'https://i.pravatar.cc/150?img=1', text: review.content || '', images: review.images || [] }))
+    const data = await getGoodsReviews(goodsId, 'all', 1, 10)
+    allReviews.value = data.list.map(review => ({ id: review.reviewId, username: review.displayName || 'Anonymous', avatar: review.avatarUrl || placeholderImage, text: review.content || '', images: review.images || [], date: review.createTime || '', rating: review.rating || 0 }))
   } catch { /* keep empty fallback when reviews are unavailable */ }
 }
 async function addToCart() {
-  try { await apiFetchPost('/app/cart/items', { skuId: selectedSkuId.value, quantity: 1 }); alert('Added to cart') } catch (error: any) { alert(error?.message || 'Unable to add to cart') }
+  const goodsId = String(route.params.id || ''); if (!getCustomerAuthState().isAuthenticated || !goodsId || selectedSkuId.value === undefined) { alert('Please sign in and select a valid SKU before adding to cart'); return }
+  try { const result = await addCartItem(goodsId, selectedSkuId.value); alert('Added to cart'); const count = result?.data?.cartQuantity ?? result?.data?.quantity; if (count !== undefined) window.dispatchEvent(new CustomEvent('cart-count-updated', { detail: count })) } catch (error: any) { alert(error?.message || 'Unable to add to cart') }
 }
 async function buyNow() {
-  try { await apiFetchPost('/app/checkout/drafts', { skuId: selectedSkuId.value, quantity: 1 }); alert('Checkout draft created') } catch (error: any) { alert(error?.message || 'Unable to start checkout') }
+  if (creatingCheckout.value) return
+  const goodsId = String(route.params.id || '')
+  if (!goodsId || selectedSkuId.value === undefined || selectedSkuId.value === null) { alert('Please select a valid SKU before buying now.'); return }
+  creatingCheckout.value = true
+  try { const draftId = await createCheckoutDraft(goodsId, selectedSkuId.value); await router.push('/checkout/drafts/' + encodeURIComponent(draftId)) } catch (error: any) { alert(error?.message || 'Unable to start checkout') } finally { creatingCheckout.value = false }
 }
 
 onMounted(() => { loadProduct(); loadReviews() })

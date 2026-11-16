@@ -14,6 +14,7 @@ export interface GuestAccount {
 }
 interface GuestSessionResponse { code?: number; msg?: string; data?: Record<string, any> | null }
 const GUEST_SESSION_PATH = '/app/guest/session'
+let guestInitializationPromise: Promise<boolean> | null = null
 const createGuestSession = async (fingerprint: string): Promise<Record<string, any> | null> => {
   const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
   try {
@@ -76,9 +77,7 @@ export const getOrCreateGuestAccount = async (): Promise<GuestAccount> => {
       const account = JSON.parse(stored) as GuestAccount
       const expiresAt = Number(account.expiresAt)
       const isExpired = !Number.isFinite(expiresAt) || Date.now() >= expiresAt
-      const hasBackendGuestId = typeof account.id === 'number' || (typeof account.id === 'string' && /^\d+$/.test(account.id))
-      if (!isExpired && hasBackendGuestId && account.token) {
-        console.log('使用已存在的游客账号:', account.username)
+      if (!isExpired && account.backendIssued && account.token && (typeof account.id === 'string' || typeof account.id === 'number')) {
         return account
       } else {
         console.log('游客账号已过期，创建新账号')
@@ -91,7 +90,7 @@ export const getOrCreateGuestAccount = async (): Promise<GuestAccount> => {
   // Guest identity, token, and expiry are issued by the backend.
   const fingerprint = generateFingerprint()
   const session = await createGuestSession(fingerprint)
-  const backendGuestId = session?.guestId ?? session?.id ?? session?.userId
+  const backendGuestId = session?.guestId ?? session?.accountId ?? session?.id ?? session?.userId
   const token = session?.token || session?.accessToken || session?.access_token
   if (!backendGuestId || !token) throw new Error('游客会话响应缺少 guestId 或 token')
   const backendExpiry = session?.expiresAt ?? session?.expireAt ?? session?.tokenExpiry
@@ -111,13 +110,15 @@ export const getOrCreateGuestAccount = async (): Promise<GuestAccount> => {
  * 自动登录游客账号
  */
 export const autoLoginGuest = async (): Promise<boolean> => {
+  if (guestInitializationPromise) return guestInitializationPromise
+  guestInitializationPromise = (async () => {
   try {
     // 检查是否已经登录
     const existingToken = localStorage.getItem('token')
     const existingUserInfo = localStorage.getItem('userInfo')
     
     if (existingToken && existingUserInfo) {
-      const userInfo = JSON.parse(existingUserInfo)
+      const userInfo = JSON.parse(existingUserInfo) as { isGuest?: boolean }
       // 如果已经是正式用户，不覆盖
       if (!userInfo.isGuest) {
         console.log('已登录正式用户，跳过游客自动登录')
@@ -140,8 +141,6 @@ export const autoLoginGuest = async (): Promise<boolean> => {
       guestAccountId: guestAccount.id
     }))
     
-    console.log('游客自动登录成功:', guestAccount.username)
-    
     // 通知主应用（如果在微前端环境中）
     if (window.parent && window.parent !== window) {
       window.parent.postMessage({
@@ -161,9 +160,11 @@ export const autoLoginGuest = async (): Promise<boolean> => {
     
     return true
   } catch (error) {
-    console.error('游客自动登录失败:', error)
     return false
   }
+  })()
+  guestInitializationPromise.finally(() => { guestInitializationPromise = null })
+  return guestInitializationPromise
 }
 
 /**

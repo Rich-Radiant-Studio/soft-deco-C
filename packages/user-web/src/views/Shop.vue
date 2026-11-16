@@ -2,79 +2,31 @@
   <div class="shop-page">
     <!-- Header -->
     <Header />
-
+          <div class="filter-section">
+            <div class="filter-group"><span class="filter-label">Price range:</span><input v-model.trim="filters.minPrice" type="number" min="0" placeholder="Min" class="price-input"><input v-model.trim="filters.maxPrice" type="number" min="0" placeholder="Max" class="price-input"><button class="filter-apply-btn" @click="applyFilters">Apply</button></div>
+            <div class="filter-group"><span class="filter-label">Brand codes</span><input v-model.trim="filters.brands" placeholder="Comma-separated backend codes"></div>
+            <div class="filter-group"><span class="filter-label">Material codes</span><input v-model.trim="filters.materials" placeholder="Comma-separated backend codes"></div>
+            <div class="filter-group"><span class="filter-label">Structure codes</span><input v-model.trim="filters.structures" placeholder="Comma-separated backend codes"></div>
+            <div class="filter-group"><span class="filter-label">Style codes</span><input v-model.trim="filters.styles" placeholder="Comma-separated backend codes"></div>
+            <div class="filter-group"><span class="filter-label">Size codes</span><input v-model.trim="filters.sizes" placeholder="Comma-separated backend codes"><button class="reset-btn" @click="resetFilters">Reset</button></div>
+            <p class="filter-note">Filter values must use backend codes. Dynamic filter-option configuration is not available from the provided contract.</p>
+          </div>
     <!-- Main Content -->
     <div class="shop-container">
       <div class="shop-layout">
         <!-- Left Sidebar Navigation -->
         <aside class="sidebar">
-          <div class="category-section">
-            <h3 class="category-title">Products</h3>
-            <ul class="category-list">
-              <li class="category-item active">
-                <a href="#" class="category-link">All Products</a>
-              </li>
-            </ul>
-          </div>
-
-          <div class="category-section">
-            <h3 class="category-title">Living Room</h3>
-            <ul class="category-list">
-              <li class="category-item"><a href="#" class="category-link">Sofas</a></li>
-              <li class="category-item"><a href="#" class="category-link">Coffee Tables</a></li>
-              <li class="category-item"><a href="#" class="category-link">TV Stands/Media Cabinets</a></li>
-              <li class="category-item"><a href="#" class="category-link">Side Tables/Corner Tables</a></li>
-              <li class="category-item"><a href="#" class="category-link">Storage/Display Cabinets</a></li>
-            </ul>
-          </div>
-
-          <div class="category-section">
-            <h3 class="category-title">Bedroom</h3>
-            <ul class="category-list">
-              <li class="category-item"><a href="#" class="category-link">Beds</a></li>
-              <li class="category-item"><a href="#" class="category-link">Nightstands</a></li>
-              <li class="category-item"><a href="#" class="category-link">Wardrobes</a></li>
-              <li class="category-item"><a href="#" class="category-link">Vanity Tables/Desks</a></li>
-              <li class="category-item"><a href="#" class="category-link">Dressers/Drawer Chests</a></li>
-            </ul>
-          </div>
-
-          <div class="category-section">
-            <h3 class="category-title">Kitchen</h3>
-            <ul class="category-list">
-              <li class="category-item"><a href="#" class="category-link">Base Cabinets</a></li>
-              <li class="category-item"><a href="#" class="category-link">Wall Cabinets</a></li>
-              <li class="category-item"><a href="#" class="category-link">Tall Cabinets</a></li>
-              <li class="category-item"><a href="#" class="category-link">Pantry Cabinets</a></li>
-              <li class="category-item"><a href="#" class="category-link">Sideboards</a></li>
-              <li class="category-item"><a href="#" class="category-link">Kitchen Islands/Bars</a></li>
-            </ul>
-          </div>
-
-          <div class="category-section">
-            <h3 class="category-title">Bathroom</h3>
-            <ul class="category-list">
-              <li class="category-item"><a href="#" class="category-link">Vanity Cabinets</a></li>
-              <li class="category-item"><a href="#" class="category-link">Mirror Cabinets</a></li>
-              <li class="category-item"><a href="#" class="category-link">Toilets</a></li>
-              <li class="category-item"><a href="#" class="category-link">Sinks/Basins</a></li>
-              <li class="category-item"><a href="#" class="category-link">Shower Systems</a></li>
-              <li class="category-item"><a href="#" class="category-link">Bathtubs</a></li>
-            </ul>
-          </div>
-
-          <div class="category-section">
-            <h3 class="category-title">Other</h3>
-            <ul class="category-list">
-              <li class="category-item"><a href="#" class="category-link">Other Products</a></li>
-            </ul>
-          </div>
+          <h3 class="category-title">Category filter</h3>
+          <label class="query-filter">Category code<input v-model.trim="filters.category" placeholder="Backend category code"></label>
+          <label class="query-filter">Subcategory code<input v-model.trim="filters.subcategory" placeholder="Backend subcategory code"></label>
+          <p class="filter-note">Category options are not provided by the current contract; enter backend codes only.</p>
         </aside>
 
         <!-- Right Content Area -->
         <main class="main-content">
           <!-- Filter Section -->
           <div class="filter-section">
+            <div class="filter-group"><span class="filter-label">Sort:</span><select v-model="sort" @change="changeSort" class="sort-select"><option value="default">Featured</option><option value="priceAsc">Price low to high</option><option value="priceDesc">Price high to low</option><option value="newest">Newest</option><option value="sales">Best selling</option></select></div>
             <!-- Price Range -->
             <div class="filter-group">
               <span class="filter-label">Price Range:</span>
@@ -188,13 +140,14 @@
 
           <!-- Product Grid -->
           <div v-if="loading" class="shop-state">Loading products...</div>
-          <div v-else-if="error" class="shop-state error">{{ error }}</div>
+          <div v-else-if="error" class="shop-state error">{{ error }} <button @click="loadProducts">Retry</button></div>
           <div v-else-if="!products.length" class="shop-state">No products found.</div>
           <div v-else class="product-grid">
             <router-link :to="`/product/${product.id}`" class="product-card-link" v-for="product in products" :key="product.id">
               <div class="product-card">
                 <div class="product-image">
                   <img :src="product.image" :alt="product.name">
+                  <span v-if="product.cardStatus !== 'ON'" class="status-badge">{{ product.cardStatus === 'SOLD_OUT' ? 'Sold out' : 'Unavailable' }}</span>
                 </div>
                 <div class="product-info">
                   <div class="product-header">
@@ -211,9 +164,11 @@
             </router-link>
           </div>
           <div v-if="total > pageSize" class="pagination">
-            <button :disabled="page <= 1" @click="page--; loadProducts()">Previous</button>
+            <button :disabled="page <= 1" @click="goPage(page - 1)">Previous</button>
             <span>Page {{ page }} / {{ totalPages }}</span>
-            <button :disabled="page >= totalPages" @click="page++; loadProducts()">Next</button>
+            <button :disabled="page >= totalPages" @click="goPage(page + 1)">Next</button>
+            <label>Rows <select v-model.number="pageSize" @change="page = 1; loadProducts()"><option :value="10">10</option><option :value="20">20</option><option :value="50">50</option></select></label>
+            <span>{{ total }} products</span>
           </div>
         </main>
       </div>
@@ -232,152 +187,20 @@ import { computed, onMounted, ref } from 'vue'
 import Header from '@/components/Header.vue'
 import Footer from '@/components/Footer.vue'
 import FloatingActionButtons from '@/components/FloatingActionButtons.vue'
-
-interface Product {
-  id: number | string
-  category: string
-  price: string
-  name: string
-  description: string
-  image: string
-  currency?: string
-}
-
-const products = ref<Product[]>([
-  {
-    id: 1,
-    category: 'Living Room Furniture',
-    price: '$1,680',
-    name: 'Cloud Fabric Sofa',
-    description: 'High-density foam filling for ultimate comfort',
-    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=300&fit=crop&q=80'
-  },
-  {
-    id: 2,
-    category: 'Living Room Furniture',
-    price: '$2,680',
-    name: 'Cloud Fabric Sofa',
-    description: 'High-density foam filling for ultimate comfort',
-    image: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=400&h=300&fit=crop&q=80'
-  },
-  {
-    id: 3,
-    category: 'Living Room Furniture',
-    price: '$1,680',
-    name: 'Cloud Fabric Sofa',
-    description: 'High-density foam filling for ultimate comfort',
-    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop&q=80'
-  },
-  {
-    id: 4,
-    category: 'Living Room Furniture',
-    price: '$1,680',
-    name: 'Cloud Fabric Sofa',
-    description: 'High-density foam filling for ultimate comfort',
-    image: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&h=300&fit=crop&q=80'
-  },
-  {
-    id: 5,
-    category: 'Living Room Furniture',
-    price: '$1,680',
-    name: 'Cloud Fabric Sofa',
-    description: 'High-density foam filling for ultimate comfort',
-    image: 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=400&h=300&fit=crop&q=80'
-  },
-  {
-    id: 6,
-    category: 'Living Room Furniture',
-    price: '$643',
-    name: 'Cloud Fabric Sofa',
-    description: 'High-density foam filling for ultimate comfort',
-    image: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=400&h=300&fit=crop&q=80'
-  },
-  {
-    id: 7,
-    category: 'Office Furniture',
-    price: '$1,099',
-    name: 'Cloud Fabric Sofa',
-    description: 'High-density foam filling for ultimate comfort',
-    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&h=300&fit=crop&q=80'
-  },
-  {
-    id: 8,
-    category: 'Office Furniture',
-    price: '$3,680',
-    name: 'Cloud Fabric Sofa',
-    description: 'High-density foam filling for ultimate comfort',
-    image: 'https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=400&h=300&fit=crop&q=80'
-  },
-  {
-    id: 9,
-    category: 'Living Room Furniture',
-    price: '$880',
-    name: 'Cloud Fabric Sofa',
-    description: 'High-density foam filling for ultimate comfort',
-    image: 'https://images.unsplash.com/photo-1600607687644-c7171b42498b?w=400&h=300&fit=crop&q=80'
-  },
-  {
-    id: 10,
-    category: 'Vanity Cabinets',
-    price: '$1,680',
-    name: 'Cloud Fabric Sofa',
-    description: 'High-density foam filling for ultimate comfort',
-    image: 'https://images.unsplash.com/photo-1600566752229-250ed79470e6?w=400&h=300&fit=crop&q=80'
-  },
-  {
-    id: 11,
-    category: 'Vanity Cabinets',
-    price: '$670',
-    name: 'Cloud Fabric Sofa',
-    description: 'High-density foam filling for ultimate comfort',
-    image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&h=300&fit=crop&q=80'
-  },
-  {
-    id: 12,
-    category: 'Vanity Cabinets',
-    price: '$880',
-    name: 'Cloud Fabric Sofa',
-    description: 'High-density foam filling for ultimate comfort',
-    image: 'https://images.unsplash.com/photo-1600210491892-03d54c0aaf87?w=400&h=300&fit=crop&q=80'
-  }
-])
-
-const loading = ref(true)
-const error = ref('')
-const page = ref(1)
-const pageSize = ref(10)
-const total = ref(0)
+import { getShopGoods, type ShopGoodsItem, type ShopGoodsQuery, ShopApiError } from '@/api/shop'
+interface Product { id: string; category: string; price: string; name: string; description: string; image: string; currency: string; cardStatus: string; purchasable: boolean }
+const products = ref<Product[]>([])
+const loading = ref(true), error = ref(''), page = ref(1), pageSize = ref(10), total = ref(0), requestSeq = ref(0)
+const sort = ref<ShopGoodsQuery['sort']>('default')
+const filters = ref<Record<string, string>>({ category: '', subcategory: '', minPrice: '', maxPrice: '', brands: '', materials: '', structures: '', styles: '', sizes: '' })
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
-const filters = ref<Record<string, string>>({})
-
-async function loadProducts() {
-  loading.value = true
-  error.value = ''
-  try {
-    const params = new URLSearchParams({ page: String(page.value), pageSize: String(pageSize.value), sort: 'default' })
-    Object.entries(filters.value).forEach(([key, value]) => value && params.set(key, value))
-    const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
-    const token = localStorage.getItem('token')
-    const response = await fetch(`${baseUrl}/app/shop/goods?${params}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
-    if (!response.ok) throw new Error(`Request failed (${response.status})`)
-    const result = await response.json()
-    if (result.code !== 200 && result.code !== 0) throw new Error(result.msg || 'Unable to load products')
-    const data = result.data || {}
-    products.value = (data.list || []).map((item: any) => ({ id: item.goodsId, category: item.category || '', price: String(item.price ?? ''), currency: item.currency || 'USD', name: item.name || '', description: item.description || '', image: item.image || '' }))
-    total.value = Number(data.total || 0)
-    page.value = Number(data.page || page.value)
-    pageSize.value = Number(data.pageSize || pageSize.value)
-  } catch (err: any) { error.value = err?.message || 'Unable to load products' } finally { loading.value = false }
-}
-function resetFilters() { filters.value = {}; page.value = 1; loadProducts() }
+const placeholder = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect width="100%25" height="100%25" fill="%23eee"/%3E%3C/svg%3E'
+async function loadProducts() { const min=filters.value.minPrice,max=filters.value.maxPrice;if(min&&(!Number.isFinite(Number(min))||Number(min)<0)||max&&(!Number.isFinite(Number(max))||Number(max)<0)||min&&max&&Number(min)>Number(max)){error.value='Price range is invalid.';products.value=[];total.value=0;return};const codes=(key:string)=>filters.value[key].split(',').map(value=>value.trim()).filter(Boolean);const seq=++requestSeq.value;loading.value=true;error.value='';try{const result=await getShopGoods({category:filters.value.category||undefined,subcategory:filters.value.subcategory||undefined,minPrice:min||undefined,maxPrice:max||undefined,brands:codes('brands'),materials:codes('materials'),structures:codes('structures'),styles:codes('styles'),sizes:codes('sizes'),sort:sort.value,page:page.value,pageSize:pageSize.value});if(seq!==requestSeq.value)return;products.value=result.list.map(item=>({id:item.goodsId,category:item.category,price:item.price,currency:item.currency,name:item.name,description:item.description,image:item.image||placeholder,cardStatus:item.cardStatus,purchasable:item.purchasable}));total.value=result.total;page.value=result.page;pageSize.value=result.pageSize}catch(e){if(seq!==requestSeq.value)return;products.value=[];total.value=0;error.value=e instanceof ShopApiError?e.message:'Unable to load products.'}finally{if(seq===requestSeq.value)loading.value=false}}
+function resetFilters(){filters.value={category:'',subcategory:'',minPrice:'',maxPrice:'',brands:'',materials:'',structures:'',styles:'',sizes:''};sort.value='default';page.value=1;void loadProducts()}
+function applyFilters(){page.value=1;void loadProducts()}
+function changeSort(){page.value=1;void loadProducts()}
+function goPage(next:number){if(next<1||next>totalPages.value)return;page.value=next;void loadProducts()}
 onMounted(loadProducts)
-
-// 筛选展开状态
-const expandedFilters = ref({
-  material: false,
-  structure: false,
-  style: false
-})
 </script>
 
 <style scoped>

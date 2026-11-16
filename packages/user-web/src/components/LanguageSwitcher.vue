@@ -27,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref, onMounted } from 'vue'
+import { computed, inject, ref, onMounted, onBeforeUnmount } from 'vue'
 import type { I18nPlugin } from '@/plugins/i18n'
 
 const i18n = inject<I18nPlugin>('i18n')
@@ -57,14 +57,18 @@ const switchLanguage = async (locale: string) => {
 }
 
 // 监听语言变化事件
+const onLanguageChanged = (event: Event) => {
+  currentLocale.value = (event as CustomEvent<{ locale: string }>).detail.locale
+}
+
 onMounted(() => {
-  window.addEventListener('user-web-language-changed', (event: any) => {
-    currentLocale.value = event.detail.locale
-  })
+  window.addEventListener('user-web-language-changed', onLanguageChanged)
   
   // 同步初始语言
   currentLocale.value = i18n?.currentLocale || 'zh'
 })
+
+onBeforeUnmount(() => window.removeEventListener('user-web-language-changed', onLanguageChanged))
 </script>
 
 <style scoped>

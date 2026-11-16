@@ -331,6 +331,8 @@ const handleLogin = async () => {
     const userInfo = data.user || data.userInfo || data.account || data
     if (token) localStorage.setItem('token', token)
     if (userInfo && typeof userInfo === 'object') localStorage.setItem('userInfo', JSON.stringify({ ...userInfo, isGuest: false }))
+    localStorage.removeItem('guestAccount')
+    localStorage.removeItem('tokenExpiry')
     emit('login', { ...loginForm, response: payload }); handleClose()
   } catch (error: any) { console.error('登录失败:', error); alert(error?.message || 'Login failed') }
 }

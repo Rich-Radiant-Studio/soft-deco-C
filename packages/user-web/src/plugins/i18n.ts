@@ -704,6 +704,7 @@ export const createI18nPlugin = (): I18nPlugin => {
 
     async switchLocale(locale: string) {
       if (languages[locale as keyof typeof languages]) {
+        if (currentLocaleRef.value === locale) return
         currentLocaleRef.value = locale
         localStorage.setItem('user-web-locale', locale)
 
@@ -743,6 +744,14 @@ export const createI18nPlugin = (): I18nPlugin => {
       app.provide('i18n', this)
     }
   }
+
+  // Keep this tab in sync when another browser tab changes the locale.
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'user-web-locale' && event.newValue && languages[event.newValue as keyof typeof languages]) {
+      currentLocaleRef.value = event.newValue
+      window.dispatchEvent(new CustomEvent('user-web-language-changed', { detail: { locale: event.newValue } }))
+    }
+  })
 
   return plugin
 }

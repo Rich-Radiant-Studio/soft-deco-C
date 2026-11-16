@@ -5,12 +5,14 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import AuthModal from '@/components/AuthModal.vue'
 
 const router = useRouter()
+const route = useRoute()
+const returnTo = () => typeof route.query.returnTo === 'string' && route.query.returnTo.startsWith('/') ? route.query.returnTo : '/'
 const handleClose = () => router.push('/')
-const handleLogin = () => router.push('/')
+const handleLogin = () => router.push(returnTo())
 </script>
 
 <style scoped>

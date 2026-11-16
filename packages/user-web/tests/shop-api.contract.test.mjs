@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
+const api = await readFile(new URL('../src/api/shop.ts', import.meta.url), 'utf8')
+const view = await readFile(new URL('../src/views/Shop.vue', import.meta.url), 'utf8')
+assert.ok(api.includes("'/app/shop/goods?'"), 'uses shop goods endpoint')
+assert.ok(api.includes("values.join(',')"), 'multi-value filters are comma separated')
+assert.ok(api.includes('payload?.success === true || payload?.code === 0 || payload?.code === 200'), 'AjaxResult business status is checked')
+assert.ok(api.includes('Number.isSafeInteger(item.goodsId)'), 'unsafe numeric goods IDs are rejected')
+assert.ok(api.includes('data.list'), 'C端 list response is parsed from data.list')
+assert.ok(view.includes('getShopGoods') && view.includes('requestSeq'), 'page uses API and protects against stale responses')
+assert.ok(view.includes('id:item.goodsId'), 'real goods ID mapping is present')
+assert.ok(view.includes('product.cardStatus') && view.includes('cardStatus:item.cardStatus') && view.includes('purchasable:item.purchasable'), 'status and purchase flags are mapped')
+assert.ok(view.includes('goPage') && view.includes('changeSort'), 'server pagination and sorting are wired')
+assert.ok(!view.includes("Cloud Fabric Sofa"), 'static product examples were removed')
+console.log('PASS shop contract assertions: guest endpoint, data.list, filters, status, IDs, race-safe pagination, no static products')

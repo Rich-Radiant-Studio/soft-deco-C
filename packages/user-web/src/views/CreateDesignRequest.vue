@@ -23,40 +23,46 @@
             <div class="subsection-group">
               <div class="subsection-item">
                 <h3 class="subsection-title"><span class="required">*</span>Select room type</h3>
-                <div class="room-types">
+                <div id="roomType" class="room-types">
                   <button 
                     v-for="room in roomTypes" 
-                    :key="room"
+                    :key="room.code"
                     class="room-type-btn"
-                    :class="{ active: selectedRooms.includes(room) }"
-                    @click="toggleRoom(room)"
+                    :class="{ active: selectedRooms.includes(room.code) }"
+                    @click="toggleRoom(room.code)"
                   >
-                    {{ room }}
+                    {{ translateOption(room.name) }}
                   </button>
                 </div>
               </div>
               
               <div class="subsection-item">
-                <h3 class="subsection-title"><span class="required">*</span>Room dimensions (m²)</h3>
+                <h3 class="subsection-title"><span class="required">*</span>Room dimensions ({{ areaUnitLabel }})</h3>
                 <p class="section-description">Please provide the total dimensions for all the design rooms mentioned.</p>
                 <div class="dimension-inputs">
                   <div class="floating-label-wrapper">
-                    <input type="text" id="length" class="dimension-input" placeholder=" " required>
-                    <label for="length" class="floating-label"><span class="required">*</span>Length</label>
+                    <input v-model="form.length" @input="handleDimensionInput" type="number" min="0.1" step="0.01" id="length" :class="['dimension-input', { 'has-error': fieldErrors.length }]" placeholder=" " required>
+                    <label for="length" class="floating-label"><span class="required">*</span>Length ({{ lengthUnitLabel }})</label>
                   </div>
                   <div class="floating-label-wrapper">
-                    <input type="text" id="width" class="dimension-input" placeholder=" " required>
-                    <label for="width" class="floating-label"><span class="required">*</span>Width</label>
+                    <input v-model="form.width" @input="handleDimensionInput" type="number" min="0.1" step="0.01" id="width" :class="['dimension-input', { 'has-error': fieldErrors.width }]" placeholder=" " required>
+                    <label for="width" class="floating-label"><span class="required">*</span>Width ({{ lengthUnitLabel }})</label>
                   </div>
                 </div>
                 <div class="dimension-inputs">
                   <div class="floating-label-wrapper">
-                    <input type="text" id="height" class="dimension-input" placeholder=" " required>
-                    <label for="height" class="floating-label"><span class="required">*</span>Height</label>
+                    <input v-model="form.height" type="number" min="0.1" step="0.01" id="height" :class="['dimension-input', { 'has-error': fieldErrors.height }]" placeholder=" " required>
+                    <label for="height" class="floating-label"><span class="required">*</span>Height ({{ lengthUnitLabel }})</label>
                   </div>
                   <div class="floating-label-wrapper">
-                    <input type="text" id="area" class="dimension-input" placeholder=" " required>
-                    <label for="area" class="floating-label"><span class="required">*</span>Area</label>
+                    <input :value="form.area" @input="handleAreaInput" type="number" min="0.1" step="0.01" id="area" :class="['dimension-input', { 'has-error': fieldErrors.area }]" placeholder=" " required>
+                    <button v-if="areaMode === 'MANUAL'" type="button" class="recalculate-btn" @click="restoreCalculatedArea">Recalculate / 恢复自动计算</button>
+                    <small class="area-mode-hint">{{ areaMode === 'MANUAL' ? 'Manual override' : 'Automatically calculated' }}</small>
+                    <div v-if="areaNeedsConfirmation" class="area-confirmation">
+                      Manual area {{ form.area }} differs from calculated {{ formatArea(calculatedArea) }} by {{ areaDifferencePercent.toFixed(1) }}%.
+                      <label><input v-model="areaConfirmed" type="checkbox"> I confirm this manual area.</label>
+                    </div>
+                    <label for="area" class="floating-label"><span class="required">*</span>Area ({{ areaUnitLabel }})</label>
                   </div>
                 </div>
               </div>
@@ -89,8 +95,9 @@
               <div class="subsection-item">
                 <h3 class="subsection-title"><span class="required">*</span>Room description</h3>
                 <textarea 
+                  v-model="form.roomDescription"
                   placeholder="Please describe your room's present condition, existing features, and specific requirements."
-                  class="description-textarea"
+                  :class="['description-textarea', { 'has-error': fieldErrors.roomDescription }]"
                 ></textarea>
               </div>
             </div>
@@ -105,12 +112,12 @@
                 <div class="style-options">
                   <button 
                     v-for="style in styleOptions" 
-                    :key="style"
+                    :key="style.code"
                     class="style-btn"
-                    :class="{ active: selectedStyles.includes(style) }"
-                    @click="toggleStyle(style)"
+                    :class="{ active: selectedStyles.includes(style.code) }"
+                    @click="toggleStyle(style.code)"
                   >
-                    {{ style }}
+                    {{ translateOption(style.name) }}
                   </button>
                 </div>
               </div>
@@ -138,14 +145,14 @@
             <p class="section-description">Please select your budget range, this will help designers provide more suitable solutions</p>
             <div class="budget-options">
               <button 
-                v-for="budget in budgetRanges" 
-                :key="budget.value"
+                v-for="budget in availableTiers" 
+                :key="budget.tierCode"
                 class="budget-btn"
-                :class="{ active: selectedBudget === budget.value }"
-                @click="selectedBudget = budget.value"
+                :class="{ active: selectedTierCode === budget.tierCode }"
+                @click="selectedTierCode = budget.tierCode"
               >
-                <div class="budget-price">{{ budget.price }}</div>
-                <div class="budget-name">{{ budget.name }}</div>
+                <div class="budget-price">{{ formatPrice(budget) }}</div>
+                <div class="budget-name">{{ translateOption(budget.name) }}</div>
               </button>
             </div>
           </div>
@@ -153,16 +160,16 @@
           <!-- Design Tier -->
           <div v-if="!isWholeHouseSelected" class="form-section">
             <h2 class="section-title">Design Tier</h2>
-            <div class="tier-options">
+            <div id="tier" class="tier-options">
               <button 
-                v-for="tier in designTiers" 
-                :key="tier.value"
+                v-for="tier in availableTiers" 
+                :key="tier.tierCode"
                 class="tier-btn"
-                :class="{ active: selectedTier === tier.value }"
-                @click="selectedTier = tier.value"
+                :class="{ active: selectedTierCode === tier.tierCode }"
+                @click="selectedTierCode = tier.tierCode"
               >
-                <div class="tier-price">${{ tier.price }}</div>
-                <div class="tier-name">{{ tier.name }}</div>
+                <div class="tier-price">{{ formatPrice(tier) }}</div>
+                <div class="tier-name">{{ translateOption(tier.name) }}</div>
               </button>
             </div>
           </div>
@@ -174,6 +181,7 @@
               <div class="subsection-item">
                 <h3 class="subsection-title"><span class="required">*</span>Inspiration Source (optional)</h3>
                 <textarea 
+                  v-model="form.linksText"
                   placeholder="Paste a link to your Pinterest board, Houzz Ideabook, or other inspiration sources"
                   class="description-textarea"
                 ></textarea>
@@ -285,7 +293,7 @@
           <div class="form-section">
             <h2 class="section-title">Construction Time</h2>
             <h3 class="subsection-title"><span class="required">*</span>Select preferred construction period</h3>
-            <div class="date-input-wrapper">
+            <div id="constructionDate" class="date-input-wrapper">
               <div class="date-input-container">
                 <Datepicker 
                   v-model="constructionDate"
@@ -310,13 +318,15 @@
               v-model="customTag"
             >
             <div class="tags-container">
-              <span 
+                  <button type="button"
                 v-for="tag in designTags" 
-                :key="tag"
-                class="tag-label"
+                    :key="tag.code"
+                    class="tag-label"
+                    :class="{ active: selectedTags.includes(tag.code) }"
+                    @click="toggleTag(tag.code)"
               >
-                {{ tag }}
-              </span>
+                    {{ translateOption(tag.name) }}
+                  </button>
             </div>
           </div>
           
@@ -326,55 +336,73 @@
             <div class="contact-form">
               <div class="form-row">
                 <div class="floating-label-wrapper">
-                  <input type="text" id="fullName" class="form-input" placeholder=" ">
+                  <input v-model="form.contactName" type="text" id="fullName" :class="['form-input', { 'has-error': fieldErrors.contactName }]" placeholder=" ">
                   <label for="fullName" class="floating-label"><span class="required">*</span>Full name</label>
                 </div>
                 <div class="floating-label-wrapper">
-                  <select id="contactMethod" class="form-input">
+                  <select v-model="form.contactMethod" id="contactMethod" :class="['form-input', { 'has-error': fieldErrors.contactMethod }]">
                     <option value=""></option>
-                    <option value="phone">Phone</option>
-                    <option value="email">Email</option>
+                    <option value="PHONE">Phone</option>
+                    <option value="EMAIL">Email</option>
                   </select>
                   <label for="contactMethod" class="floating-label"><span class="required">*</span>Contact Method</label>
                 </div>
               </div>
               <div class="form-row">
                 <div class="floating-label-wrapper">
-                  <input type="text" id="phoneNumber" class="form-input" placeholder=" ">
+                  <input v-model="form.phone" type="text" id="phoneNumber" :class="['form-input', { 'has-error': fieldErrors.phone }]" placeholder=" ">
                   <label for="phoneNumber" class="floating-label"><span class="required">*</span>Phone Number</label>
                 </div>
+                <div class="floating-label-wrapper contact-time-picker">
+                  <div class="contact-time-controls">
+                    <select v-model="contactStartTime" id="contactStartTime" :class="['form-input', { 'has-error': fieldErrors.contactTime }]" @change="syncContactTime">
+                      <option value="">{{ currentLanguage === 'zh' ? '开始时间' : 'Start Time' }}</option>
+                      <option v-for="time in contactTimeOptions" :key="`start-${time}`" :value="time">{{ time }}</option>
+                    </select>
+                    <span class="contact-time-separator">-</span>
+                    <select v-model="contactEndTime" id="contactEndTime" :class="['form-input', { 'has-error': fieldErrors.contactTime }]" @change="syncContactTime">
+                      <option value="">{{ currentLanguage === 'zh' ? '结束时间' : 'End Time' }}</option>
+                      <option v-for="time in contactTimeOptions" :key="`end-${time}`" :value="time">{{ time }}</option>
+                    </select>
+                  </div>
+                  <div class="contact-time-display"><CalendarIcon :size="16" color="#333333" /> {{ contactTime || (currentLanguage === 'zh' ? '请选择联系时间段' : 'Select contact time range') }}</div>
+                  <p v-if="contactTimeRestoreWarning" class="request-error">{{ contactTimeRestoreWarning }}</p>
+                  <label class="floating-label active" for="contactStartTime"><span class="required">*</span>{{ currentLanguage === 'zh' ? '方便联系的时间' : 'Preferred Contact Time' }}</label>
+                </div>
+              </div>
+              <div v-if="form.contactMethod === 'EMAIL'" class="form-row">
                 <div class="floating-label-wrapper">
-                  <input type="text" id="contactTime" class="form-input" placeholder=" ">
-                  <label for="contactTime" class="floating-label"><span class="required">*</span>Preferred Contact Time</label>
+                  <input v-model="form.email" type="email" id="emailAddress" :class="['form-input', { 'has-error': fieldErrors.email }]" placeholder=" ">
+                  <label for="emailAddress" class="floating-label"><span class="required">*</span>Email</label>
                 </div>
               </div>
               <div class="form-row">
                 <div class="floating-label-wrapper">
-                  <input type="text" id="projectAddress" class="form-input" placeholder=" ">
+                  <input v-model="form.address" type="text" id="projectAddress" :class="['form-input', { 'has-error': fieldErrors.address }]" placeholder=" ">
                   <label for="projectAddress" class="floating-label"><span class="required">*</span>Project Address</label>
                 </div>
                 <div class="floating-label-wrapper">
-                  <input type="text" id="aptSuite" class="form-input" placeholder=" ">
+                  <input v-model="form.apt" type="text" id="aptSuite" class="form-input" placeholder=" ">
                   <label for="aptSuite" class="floating-label">Apt, Suite, Unit, etc.</label>
                 </div>
               </div>
               <div class="form-row">
                 <div class="floating-label-wrapper">
-                  <input type="text" id="city" class="form-input" placeholder=" ">
+                  <input v-model="form.city" type="text" id="city" class="form-input" placeholder=" ">
                   <label for="city" class="floating-label">City</label>
                 </div>
                 <div class="floating-label-wrapper">
-                  <input type="text" id="state" class="form-input" placeholder=" ">
+                  <input v-model="form.state" type="text" id="state" class="form-input" placeholder=" ">
                   <label for="state" class="floating-label">State</label>
                 </div>
               </div>
               <div class="form-row">
                 <div class="floating-label-wrapper">
-                  <input type="text" id="postalCode" class="form-input" placeholder=" ">
+                  <input v-model="form.postalCode" type="text" id="postalCode" class="form-input" placeholder=" ">
                   <label for="postalCode" class="floating-label">Postal Code</label>
                 </div>
                 <div class="floating-label-wrapper">
-                  <input type="text" id="country" class="form-input" placeholder=" ">
+                  <input v-model="form.country" type="text" id="country" class="form-input" placeholder=" ">
                   <label for="country" class="floating-label">Country</label>
                 </div>
               </div>
@@ -385,6 +413,7 @@
           <div class="form-section">
             <h2 class="section-title">Additional Items (Optional)</h2>
             <textarea 
+              v-model="form.additionalText"
               placeholder="Any other information you'd like designers to know"
               class="additional-textarea"
             ></textarea>
@@ -392,8 +421,17 @@
           
           <!-- Action Buttons -->
           <div class="action-buttons">
-            <button class="submit-btn" @click="handleSubmit">Submit Design Request</button>
-            <button class="draft-btn" @click="saveDraft">Save as Draft</button>
+            <div class="action-button-row">
+              <button type="button" class="submit-btn" :disabled="submitting" :aria-busy="submitting" @click.prevent="handleSubmit">{{ submitting ? 'Submitting…' : 'Submit Design Request' }}</button>
+              <button type="button" class="draft-btn" :disabled="savingDraft" @click="saveDraft">{{ savingDraft ? 'Saving…' : 'Save as Draft' }}</button>
+            </div>
+            <div v-if="pageError || (submitBlockReason && !pageError) || Object.keys(fieldErrors).length" class="request-feedback">
+              <p v-if="pageError" class="request-error" role="alert">{{ pageError }}</p>
+              <p v-if="submitBlockReason && !pageError" class="request-error" role="status">{{ submitBlockReason }}</p>
+              <ul v-if="Object.keys(fieldErrors).length" class="request-error field-errors" role="alert">
+              <li v-for="(message, field) in fieldErrors" :key="field">{{ message }}</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
@@ -405,7 +443,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, inject, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { BFormFile } from 'bootstrap-vue-next'
 import Datepicker from 'vue3-datepicker'
@@ -413,50 +451,125 @@ import Header from '@/components/Header.vue'
 import Footer from '@/components/Footer.vue'
 import SvgIcon from '@/components/SvgIcon.vue'
 import CalendarIcon from '@/components/CalendarIcon.vue'
+import { getCustomerAuthState } from '@/utils/customerAuth'
+import type { I18nPlugin } from '@/plugins/i18n'
+import { DesignRequestError, getDesignRequestDraft, getDesignRequestOptions, saveDesignRequestDraft, submitDesignRequest, type DesignOption, type DesignTier } from '@/api/designRequests'
 
 const router = useRouter()
+const i18n = inject<I18nPlugin>('i18n')
+const currentLanguage = ref(i18n?.currentLocale || 'zh')
+const onLanguageChanged = (event: Event) => { currentLanguage.value = (event as CustomEvent<{ locale: string }>).detail.locale }
+onMounted(() => window.addEventListener('user-web-language-changed', onLanguageChanged))
+onBeforeUnmount(() => window.removeEventListener('user-web-language-changed', onLanguageChanged))
+const translateOption = (value: string) => {
+  const key = ({
+    'Bathroom': 'room.bathroom', 'Living Room': 'room.living', 'Bedroom': 'room.bedroom', 'Dining Room': 'room.dining', 'Whole House': 'room.whole',
+    'Modern': 'home.style.modern', 'Minimalist': 'home.style.modern', 'Nordic': 'home.style.scandinavian', 'Chinese': 'home.style.chinese', 'Japanese': 'home.style.japanese', 'Industrial': 'home.style.industrial', 'Mediterranean': 'home.style.mediterranean',
+    'Basic': 'request.budget.basic', 'Standard': 'request.budget.standard', 'Premium': 'request.budget.premium', 'Luxury': 'request.budget.luxury',
+    'CLASSIC': 'request.tier.classic', 'MODERN': 'request.tier.modern', 'Cozy': 'request.tag.cozy', 'Bright': 'request.tag.bright', 'Spacious': 'request.tag.spacious', 'Classic': 'request.tier.classic', 'Functional': 'request.tag.functional'
+  } as Record<string, string>)[value]
+  if (!key) return value
+  // The existing catalog covers the common room/style keys; keep request-only
+  // labels local here until the catalog is extended, while remaining reactive.
+  const labels: Record<string, Record<string, string>> = {
+    'request.budget.basic': { zh: '基础', en: 'Basic', es: 'Básico' }, 'request.budget.standard': { zh: '标准', en: 'Standard', es: 'Estándar' },
+    'request.budget.premium': { zh: '高级', en: 'Premium', es: 'Premium' }, 'request.budget.luxury': { zh: '豪华', en: 'Luxury', es: 'Lujo' },
+    'request.tier.classic': { zh: '经典', en: 'CLASSIC', es: 'Clásico' }, 'request.tier.modern': { zh: '现代', en: 'MODERN', es: 'Moderno' },
+    'request.tag.cozy': { zh: '温馨', en: 'Cozy', es: 'Acogedor' }, 'request.tag.bright': { zh: '明亮', en: 'Bright', es: 'Luminoso' },
+    'request.tag.spacious': { zh: '宽敞', en: 'Spacious', es: 'Espacioso' }, 'request.tag.functional': { zh: '实用', en: 'Functional', es: 'Funcional' }
+  }
+  return labels[key]?.[currentLanguage.value] || i18n?.t(key) || value
+}
 
-// Room types
-const roomTypes = ref<string[]>(['Bathroom', 'Living Room', 'Bedroom', 'Dining Room', 'Balcony', 'Whole House'])
+// Options and selected values retain the backend codes; labels are presentation only.
+const roomOptions = ref<DesignOption[]>([])
+const styleOptions = ref<DesignOption[]>([])
+const tagOptions = ref<DesignOption[]>([])
+const tierOptions = ref<DesignTier[]>([])
+const colorOptions = ref<string[]>([])
+const lengthUnitLabel = ref('ft')
+const areaUnitLabel = ref('sq.ft')
 const selectedRooms = ref<string[]>([])
-
-// Check if Whole House is selected
-const isWholeHouseSelected = computed(() => selectedRooms.value.includes('Whole House'))
-
-// Style options
-const styleOptions = ref<string[]>(['Modern', 'Minimalist', 'Nordic', 'Chinese', 'Japanese', 'Industrial', 'Mediterranean', 'Vintage'])
+const selectedTierCode = ref('')
+const isWholeHouseSelected = computed(() => roomOptions.value.find(room => room.code === selectedRooms.value[0])?.wholeHouse === true)
+const roomTypes = computed(() => roomOptions.value)
+const availableTiers = computed(() => {
+  const roomCode = selectedRooms.value[0]
+  const kind = isWholeHouseSelected.value ? 'BUDGET' : 'DESIGN'
+  return tierOptions.value.filter(tier => tier.roomTypeCode === roomCode && tier.kind === kind)
+})
+const configurationReady = computed(() => roomOptions.value.length > 0 && styleOptions.value.length > 0 && availableTiers.value.length > 0)
+const optionsReady = computed(() => roomOptions.value.length > 0 && styleOptions.value.length > 0 && tierOptions.value.length > 0)
+const submitBlockReason = computed(() => {
+  if (submitting.value) return 'Submitting your design request…'
+  if (!optionsReady.value) return 'Design options are still loading. Please wait a moment and try again.'
+  if (!selectedRooms.value.length) return 'Select a room type to continue.'
+  if (!availableTiers.value.length) return 'No active price options are configured for the selected room.'
+  if (!selectedTierCode.value) return 'Select a price option to continue.'
+  return ''
+})
+const selectedTier = computed(() => availableTiers.value.find(tier => tier.tierCode === selectedTierCode.value))
+const pageError = ref('')
+const fieldErrors = ref<Record<string, string>>({})
+const submitting = ref(false)
+const savingDraft = ref(false)
+const draftVersion = ref<number | string>(0)
+const form = ref({ length: '', width: '', height: '', area: '', roomDescription: '', linksText: '', additionalText: '', constructionDate: '', contactName: '', contactMethod: '', phone: '', email: '', contactTime: '', address: '', apt: '', city: '', state: '', postalCode: '', country: '' })
+const contactStartTime = ref('')
+const contactEndTime = ref('')
+const contactTimeRestoreWarning = ref('')
+const contactTimeOptions = Array.from({ length: 48 }, (_, index) => {
+  const hour = String(Math.floor(index / 2)).padStart(2, '0')
+  const minute = index % 2 === 0 ? '00' : '30'
+  return `${hour}:${minute}`
+})
+const contactTime = computed(() => contactStartTime.value && contactEndTime.value ? `${contactStartTime.value}-${contactEndTime.value}` : '')
+const syncContactTime = () => {
+  form.value.contactTime = contactTime.value
+  contactTimeRestoreWarning.value = ''
+  if (contactStartTime.value && contactEndTime.value && contactEndTime.value <= contactStartTime.value) fieldErrors.value.contactTime = 'End time must be later than start time.'
+  else if (fieldErrors.value.contactTime) delete fieldErrors.value.contactTime
+}
+type AreaMode = 'CALCULATED' | 'MANUAL'
+const areaMode = ref<AreaMode>('CALCULATED')
+const areaConfirmed = ref(true)
+const calculatedArea = computed(() => {
+  const length = Number(form.value.length)
+  const width = Number(form.value.width)
+  return Number.isFinite(length) && length > 0 && Number.isFinite(width) && width > 0 ? Math.round(length * width * 100) / 100 : NaN
+})
+const areaDifferencePercent = computed(() => {
+  const manual = Number(form.value.area)
+  const calculated = calculatedArea.value
+  return areaMode.value === 'MANUAL' && Number.isFinite(manual) && Number.isFinite(calculated) && calculated > 0 ? Math.abs(manual - calculated) / calculated * 100 : 0
+})
+const areaNeedsConfirmation = computed(() => areaMode.value === 'MANUAL' && areaDifferencePercent.value > 5)
+const formatArea = (value: number) => Number.isFinite(value) ? value.toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1') : ''
+const recalculateArea = () => {
+  form.value.area = formatArea(calculatedArea.value)
+}
+const handleDimensionInput = () => {
+  areaConfirmed.value = false
+  if (areaMode.value === 'CALCULATED') recalculateArea()
+}
+const handleAreaInput = (event: Event) => {
+  areaMode.value = 'MANUAL'
+  areaConfirmed.value = false
+  form.value.area = (event.target as HTMLInputElement).value
+}
+const restoreCalculatedArea = () => {
+  areaMode.value = 'CALCULATED'
+  areaConfirmed.value = true
+  recalculateArea()
+}
 const selectedStyles = ref<string[]>([])
 
 // Color palette
-const colorPalette = [
-  '#000000', '#333333', '#666666', '#999999',
-  '#FFB6C1', '#FFC0CB', '#FFD700', '#FFFF00',
-  '#90EE90', '#00FF00', '#87CEEB', '#00BFFF',
-  '#4169E1', '#0000FF', '#9370DB', '#8B008B',
-  '#DDA0DD', '#EE82EE'
-]
 const selectedColors = ref<string[]>([])
-
-// Design tiers
-const designTiers = [
-  { value: 'classic', price: '3,000', name: 'CLASSIC' },
-  { value: 'modern', price: '5,000', name: 'MODERN' },
-  { value: 'premium', price: '10,000', name: 'PREMIUM' },
-  { value: 'luxury', price: '20,000+', name: 'LUXURY' }
-]
-const selectedTier = ref('')
-
-// Budget ranges
-const budgetRanges = [
-  { value: 'basic', price: '$10,000', name: 'Basic' },
-  { value: 'standard', price: '$50,000', name: 'Standard' },
-  { value: 'premium', price: '$100,000', name: 'Premium' },
-  { value: 'luxury', price: '$150,000+', name: 'Luxury' }
-]
-const selectedBudget = ref('')
+const colorPalette = computed(() => colorOptions.value)
 
 // Design tags
-const designTags = ref<string[]>(['Cozy', 'Bright', 'Spacious', 'Modern', 'Classic', 'Functional', 'Top', 'Big'])
+const designTags = computed(() => tagOptions.value)
 const selectedTags = ref<string[]>([])
 const customTag = ref('')
 
@@ -490,7 +603,6 @@ const addUploadSlot = (roomName: string) => {
     file: null as any,
     preview: ''
   })
-  console.log('Added slot for', roomName, roomUploadImages.value[roomName].length)
 }
 
 // Handle file upload
@@ -555,14 +667,9 @@ const handleBFormFileUpload = (event: any, roomName: string, index: number) => {
 
 // Remove uploaded image
 const removeImage = (roomName: string, index: number) => {
-  console.log('removeImage called:', roomName, index)
-  console.log('Before:', roomUploadImages.value[roomName])
-  
   if (roomUploadImages.value[roomName]) {
     roomUploadImages.value[roomName].splice(index, 1)
   }
-  
-  console.log('After:', roomUploadImages.value[roomName])
 }
 
 // Add new upload slot
@@ -574,6 +681,8 @@ const addNewUploadSlot = (roomName: string) => {
 const toggleRoom = (room: string) => {
   // Single selection - replace the array with only the selected room
   selectedRooms.value = [room]
+  selectedTierCode.value = ''
+  pageError.value = availableTiers.value.length ? '' : 'No active price options are configured for this room.'
 }
 
 const toggleStyle = (style: string) => {
@@ -604,88 +713,187 @@ const toggleTag = (tag: string) => {
 }
 
 // Handle submit
-const handleSubmit = async () => {
-  // Get selected room type
-  const room = selectedRooms.value[0] || ''
-  
-  // Get selected tier (budget for Whole House, tier for others)
-  let tier = ''
-  if (isWholeHouseSelected.value) {
-    tier = selectedBudget.value
-  } else {
-    tier = selectedTier.value
+const formatPrice = (tier: DesignTier) => {
+  const amount = typeof tier.priceAmount === 'number' ? tier.priceAmount : Number(tier.priceAmount)
+  return Number.isFinite(amount) ? new Intl.NumberFormat(undefined, { style: 'currency', currency: tier.currency || 'USD' }).format(amount) : String(tier.priceAmount)
+}
+const buildDesignRequestPayload = (validate = true): Record<string, unknown> | null => {
+  fieldErrors.value = {}
+  const roomTypeCode = selectedRooms.value[0]
+  const tier = selectedTier.value
+  if (validate && !optionsReady.value) { pageError.value = 'Design options are unavailable. Please reload the page or try again later.'; return null }
+  if (validate && !roomTypeCode) { fieldErrors.value.roomType = 'Room type is required.'; return null }
+  if (validate && (!configurationReady.value || !tier)) { fieldErrors.value.tier = 'Select an available price option for the selected room.'; return null }
+  const number = (value: string) => value.trim() === '' ? NaN : Number(value)
+  const length = number(form.value.length), width = number(form.value.width), height = number(form.value.height), enteredArea = number(form.value.area)
+  if (validate) {
+    if (!(Number.isFinite(length) && length > 0)) fieldErrors.value.length = 'Length must be greater than 0.'
+    if (!(Number.isFinite(width) && width > 0)) fieldErrors.value.width = 'Width must be greater than 0.'
+    if (!(Number.isFinite(height) && height > 0)) fieldErrors.value.height = 'Height must be greater than 0.'
+    if (form.value.area.trim() !== '' && !(Number.isFinite(enteredArea) && enteredArea > 0)) fieldErrors.value.area = 'Area must be greater than 0 when provided.'
+    if (!form.value.roomDescription.trim()) fieldErrors.value.roomDescription = 'Room description is required.'
+    if (!selectedStyles.value.length) fieldErrors.value.styles = 'Select at least one preferred style.'
+    if (!constructionDate.value) fieldErrors.value.constructionDate = 'Construction period is required.'
+    if (!form.value.contactName.trim()) fieldErrors.value.contactName = 'Full name is required.'
+    if (!form.value.contactMethod) fieldErrors.value.contactMethod = 'Contact method is required.'
+    if (!contactStartTime.value) fieldErrors.value.contactTime = 'Start time is required.'
+    else if (!contactEndTime.value) fieldErrors.value.contactTime = 'End time is required.'
+    else if (!/^\d{2}:([03]0)$/.test(contactStartTime.value) || !/^\d{2}:([03]0)$/.test(contactEndTime.value)) fieldErrors.value.contactTime = 'Select a valid 30-minute time slot.'
+    else if (contactEndTime.value <= contactStartTime.value) fieldErrors.value.contactTime = 'End time must be later than start time.'
+    if (!form.value.address.trim()) fieldErrors.value.address = 'Project address is required.'
+    if (form.value.contactMethod === 'PHONE' && !form.value.phone.trim()) fieldErrors.value.phone = 'Phone number is required for phone contact.'
+    if (form.value.contactMethod === 'EMAIL' && !form.value.email.trim()) fieldErrors.value.email = 'Email is required for email contact.'
+    if (form.value.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) fieldErrors.value.email = 'Enter a valid email address.'
+    if (Object.keys(fieldErrors.value).length) {
+      pageError.value = 'Please correct the highlighted fields before submitting.'
+      const firstField = Object.keys(fieldErrors.value)[0]
+      const targetId: Record<string, string> = { roomType: 'length', tier: 'tier', roomDescription: 'roomDescription', constructionDate: 'constructionDate', contactName: 'fullName', contactMethod: 'contactMethod', contactTime: 'contactTime', address: 'projectAddress', email: 'emailAddress', phone: 'phoneNumber' }
+      requestAnimationFrame(() => {
+        const target = document.getElementById(targetId[firstField] || firstField)
+        target?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        target?.focus({ preventScroll: true })
+      })
+      return null
+    }
   }
-  
-  try {
-    const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
-    const token = localStorage.getItem('token')
-    const idempotencyKey = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`
-    const response = await fetch(`${baseUrl}/app/design-request`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey, ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ room, tier, rooms: selectedRooms.value, styles: selectedStyles.value, colors: selectedColors.value, tags: selectedTags.value, customTag: customTag.value }) })
-    const result = await response.json()
-    if (!response.ok || (result.code !== 200 && result.code !== 0)) throw new Error(result.msg || 'Unable to submit request')
-  } catch (error: any) { alert(error?.message || 'Unable to submit request'); return }
-  // Navigate to payment page with query params
-  router.push({
-    path: '/pay-design-fee',
-    query: {
-      room,
-      tier
-    }
-  })
+  const calculated = calculatedArea.value
+  const isManual = areaMode.value === 'MANUAL'
+  const area = isManual ? enteredArea : calculated
+  const areaSource = isManual ? 'MANUAL' : 'CALCULATED'
+  const differs = Number.isFinite(calculated) && calculated > 0 && Number.isFinite(area) && Math.abs(area - calculated) / calculated > 0.05
+  const areaRatio = Number.isFinite(calculated) && calculated > 0 && Number.isFinite(area) ? area / calculated : 1
+  if (validate && isManual && (areaRatio > 100 || areaRatio < 0.01)) {
+    fieldErrors.value.area = 'The entered area appears inconsistent with length × width. Please correct it or use the calculated area.'
+    pageError.value = 'Please correct the area before submitting.'
+    requestAnimationFrame(() => {
+      const target = document.getElementById('area')
+      target?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      target?.focus({ preventScroll: true })
+    })
+    return null
+  }
+  if (validate && isManual && differs && !areaConfirmed.value) {
+    fieldErrors.value.area = 'Please confirm the manual area when it differs from length × width by more than 5%.'
+    pageError.value = 'Please confirm the manual area before submitting.'
+    return null
+  }
+  const confirmed = isManual ? (differs ? areaConfirmed.value : true) : true
+  const date = constructionDate.value
+  const constructionDateValue = date ? [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-') : ''
+  const additionalText = [form.value.additionalText.trim(), customTag.value.trim() ? 'Custom tag: ' + customTag.value.trim() : ''].filter(Boolean).join('\n')
+  return { ...(roomTypeCode ? { roomTypeCode } : {}), ...(tier ? { tierCode: tier.tierCode, priceVersion: tier.priceVersion } : {}), ...(Number.isFinite(length) ? { length } : {}), ...(Number.isFinite(width) ? { width } : {}), ...(Number.isFinite(height) ? { height } : {}), ...(Number.isFinite(area) ? { areaSource, area, areaConfirmed: confirmed } : {}), styles: selectedStyles.value, tags: selectedTags.value, colors: selectedColors.value, links: form.value.linksText.split(/\r?\n/).map(link => link.trim()).filter(Boolean), roomDescription: form.value.roomDescription.trim(), additionalText, constructionDate: constructionDateValue, contactName: form.value.contactName.trim(), contactMethod: form.value.contactMethod, phone: form.value.phone.trim(), ...(form.value.email.trim() ? { email: form.value.email.trim() } : {}), contactTime: contactTime.value, address: form.value.address.trim(), apt: form.value.apt.trim(), city: form.value.city.trim(), state: form.value.state.trim(), postalCode: form.value.postalCode.trim(), country: form.value.country.trim() }
 }
-
+function showRequestError(error: unknown) {
+  const requestError = error instanceof DesignRequestError ? error : null
+  if (requestError?.code === 'FIELD_INVALID' || requestError?.businessCode === 400 || requestError?.message === 'FIELD_INVALID') pageError.value = '提交的数据不符合要求，请检查房间尺寸、面积、联系时间及其他必填字段。' + (requestError.businessCode !== undefined ? ' (business code: ' + requestError.businessCode + ')' : '')
+  else if (requestError?.code === 'CONFIG_INVALID' || requestError?.message === 'CONFIG_INVALID') pageError.value = '房间或档位价格配置无效，请重新选择。' + (requestError.businessCode !== undefined ? ' (business code: ' + requestError.businessCode + ')' : '') + (requestError.status ? ' (HTTP ' + requestError.status + ')' : '')
+  else if (requestError?.status === 401 || requestError?.code === 'UNAUTHORIZED') pageError.value = 'Please sign in with a customer account to continue.'
+  else if (requestError?.status === 400 || requestError?.status === 422) pageError.value = requestError.message || 'Please check the submitted information.'
+  else pageError.value = requestError?.message || (error instanceof Error ? error.message : 'Unable to complete the request.')
+}
+const pendingRequestKey = 'pending-design-request-form'
+const savePendingRequestForm = () => {
+  const payload = {
+    ...form.value,
+    roomTypeCode: selectedRooms.value[0],
+    tierCode: selectedTierCode.value,
+    styles: selectedStyles.value,
+    colors: selectedColors.value,
+    tags: selectedTags.value,
+    customTag: customTag.value,
+    constructionDate: constructionDate.value ? constructionDate.value.toISOString() : ''
+  }
+  sessionStorage.setItem(pendingRequestKey, JSON.stringify(payload))
+}
+const handleSubmit = async () => {
+  if (submitting.value) return
+  pageError.value = ''
+  fieldErrors.value = {}
+  const auth = getCustomerAuthState()
+  if (!auth.isAuthenticated || !auth.token) {
+    savePendingRequestForm()
+    pageError.value = auth.isGuest ? 'Please sign in with a customer account to submit a design request.' : 'Please sign in to continue.'
+    await router.push({ path: '/login', query: { returnTo: '/post-demand' } })
+    return
+  }
+  const payload = buildDesignRequestPayload()
+  if (!payload) return
+  submitting.value = true
+  try {
+    const key = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2)
+    await submitDesignRequest(payload, key)
+    alert('Request submitted. Design-fee payment is not yet connected. View it in My Requests.')
+    await router.push('/profile/requests')
+  } catch (error) { showRequestError(error) } finally { submitting.value = false }
+}
+const restoreDraftPayload = (payload: Record<string, unknown>) => {
+  const scalar = (key: keyof typeof form.value) => typeof payload[key] === 'string' || typeof payload[key] === 'number' ? String(payload[key]) : ''
+  form.value = { length: scalar('length'), width: scalar('width'), height: scalar('height'), area: scalar('area'), roomDescription: scalar('roomDescription'), linksText: Array.isArray(payload.links) ? payload.links.filter((item): item is string => typeof item === 'string').join('\n') : '', additionalText: scalar('additionalText'), constructionDate: scalar('constructionDate'), contactName: scalar('contactName'), contactMethod: scalar('contactMethod'), phone: scalar('phone'), email: scalar('email'), contactTime: scalar('contactTime'), address: scalar('address'), apt: scalar('apt'), city: scalar('city'), state: scalar('state'), postalCode: scalar('postalCode'), country: scalar('country') }
+  contactStartTime.value = ''
+  contactEndTime.value = ''
+  contactTimeRestoreWarning.value = ''
+  const savedContactTime = form.value.contactTime.trim()
+  const parsedContactTime = /^(\d{2}:\d{2})-(\d{2}:\d{2})$/.exec(savedContactTime)
+  if (parsedContactTime && contactTimeOptions.includes(parsedContactTime[1]) && contactTimeOptions.includes(parsedContactTime[2])) {
+    contactStartTime.value = parsedContactTime[1]
+    contactEndTime.value = parsedContactTime[2]
+    syncContactTime()
+  } else if (savedContactTime) {
+    contactTimeRestoreWarning.value = 'Saved contact time is not a valid time range. Please select a start and end time.'
+  }
+  const savedAreaSource = payload.areaSource === 'MANUAL' || payload.areaSource === 'CALCULATED' ? payload.areaSource : undefined
+  const savedArea = Number(form.value.area)
+  const inferredManual = savedAreaSource ? savedAreaSource === 'MANUAL' : Number.isFinite(savedArea) && Number.isFinite(Number(form.value.length) * Number(form.value.width)) && Math.abs(savedArea - Number(form.value.length) * Number(form.value.width)) > 0.05 * Number(form.value.length) * Number(form.value.width)
+  areaMode.value = inferredManual ? 'MANUAL' : 'CALCULATED'
+  areaConfirmed.value = areaMode.value === 'MANUAL' && payload.areaConfirmed === true
+  if (areaMode.value === 'CALCULATED') recalculateArea()
+  constructionDate.value = form.value.constructionDate ? new Date(form.value.constructionDate) : undefined
+  selectedRooms.value = typeof payload.roomTypeCode === 'string' ? [payload.roomTypeCode] : Array.isArray(payload.rooms) ? payload.rooms.filter((item): item is string => typeof item === 'string') : []
+  selectedTierCode.value = typeof payload.tierCode === 'string' ? payload.tierCode : ''
+  selectedStyles.value = Array.isArray(payload.styles) ? payload.styles.filter((item): item is string => typeof item === 'string') : []
+  selectedColors.value = Array.isArray(payload.colors) ? payload.colors.filter((item): item is string => typeof item === 'string') : []
+  selectedTags.value = Array.isArray(payload.tags) ? payload.tags.filter((item): item is string => typeof item === 'string') : []
+  customTag.value = typeof payload.customTag === 'string' ? payload.customTag : ''
+}
 const saveDraft = async () => {
-  const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
-  const token = localStorage.getItem('token')
+  if (savingDraft.value) return
+  pageError.value = ''
+  const payload = buildDesignRequestPayload(false)
+  if (!payload) return
+  payload.customTag = customTag.value
+  savingDraft.value = true
   try {
-    const response = await fetch(`${baseUrl}/app/design-request/draft`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ rooms: selectedRooms.value, styles: selectedStyles.value, colors: selectedColors.value, tags: selectedTags.value, customTag: customTag.value, budget: selectedBudget.value, tier: selectedTier.value }) })
-    const result = await response.json()
-    if (!response.ok || (result.code !== 200 && result.code !== 0)) throw new Error(result.msg || 'Unable to save draft')
+    const result = await saveDesignRequestDraft(draftVersion.value, payload) as { version?: number | string; data?: { version?: number | string } }
+    const version = result?.version ?? result?.data?.version
+    if (version !== undefined) draftVersion.value = version
     alert('Draft saved')
-  } catch (error: any) { alert(error?.message || 'Unable to save draft') }
+  } catch (error) { showRequestError(error) } finally { savingDraft.value = false }
 }
-
-// Handle select floating label
-import { onMounted } from 'vue'
-
-onMounted(() => {
-  const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
-  const token = localStorage.getItem('token')
-  fetch(`${baseUrl}/app/design-request/options`, { headers: token ? { Authorization: `Bearer ${token}` } : {} }).then(r => r.json()).then(result => {
-    const options = result?.data?.options || result?.data || result
-    const values = (value: unknown) => Array.isArray(value) ? value.map(item => typeof item === 'string' ? item : (item as any)?.name || (item as any)?.label || (item as any)?.value).filter(Boolean) : []
-    const rooms = values(options?.rooms || options?.roomTypes)
-    const styles = values(options?.styles || options?.styleOptions)
-    const tags = values(options?.tags || options?.designTags)
-    if (rooms.length) roomTypes.value = rooms
-    if (styles.length) styleOptions.value = styles
-    if (tags.length) designTags.value = [...new Set(tags)]
-  }).catch(() => {})
-  fetch(`${baseUrl}/app/design-request/draft`, { headers: token ? { Authorization: `Bearer ${token}` } : {} }).then(r => r.json()).then(result => {
-    const draft = result?.data
-    if (draft) {
-      selectedRooms.value = draft.rooms || selectedRooms.value
-      selectedStyles.value = draft.styles || selectedStyles.value
-      selectedColors.value = draft.colors || selectedColors.value
-      selectedTags.value = draft.tags || selectedTags.value
-      customTag.value = draft.customTag || customTag.value
+onMounted(async () => {
+  try {
+    const options = await getDesignRequestOptions()
+    roomOptions.value = options.rooms; styleOptions.value = options.styles; tagOptions.value = options.tags; tierOptions.value = options.tiers; colorOptions.value = options.colors
+    lengthUnitLabel.value = options.lengthUnit.toLowerCase() === 'ft' ? 'ft' : options.lengthUnit
+    areaUnitLabel.value = options.areaUnit.toLowerCase() === 'sqft' ? 'sq.ft' : options.areaUnit
+    if (!options.rooms.length || !options.tiers.length || !options.styles.length) throw new DesignRequestError('No usable rooms, styles, or pricing tiers were returned.')
+  } catch (error) { showRequestError(error) }
+  let restoredPending = false
+  try {
+    const pending = sessionStorage.getItem(pendingRequestKey)
+    if (pending) {
+      restoreDraftPayload(JSON.parse(pending))
+      sessionStorage.removeItem(pendingRequestKey)
+      restoredPending = true
+      pageError.value = 'Your saved form was restored. Review it and submit when ready.'
     }
-  }).catch(() => {})
-  const selectElements = document.querySelectorAll('select.form-input')
-  selectElements.forEach((select) => {
-    const updateLabel = () => {
-      const label = select.nextElementSibling
-      if (select.value !== '') {
-        label?.classList.add('active')
-      } else {
-        label?.classList.remove('active')
-      }
-    }
-    
-    select.addEventListener('change', updateLabel)
-    select.addEventListener('blur', updateLabel)
-    
-    updateLabel()
+  } catch { sessionStorage.removeItem(pendingRequestKey) }
+  try {
+    const draft = await getDesignRequestDraft()
+    if (draft) { draftVersion.value = draft.version; if (draft.payload && !restoredPending) restoreDraftPayload(draft.payload) }
+  } catch (error) { if (!(error instanceof DesignRequestError) || error.status !== 401) showRequestError(error) }
+  document.querySelectorAll('select.form-input').forEach(select => {
+    const updateLabel = () => select.nextElementSibling?.classList.toggle('active', (select as HTMLSelectElement).value !== '')
+    select.addEventListener('change', updateLabel); select.addEventListener('blur', updateLabel); updateLabel()
   })
 })
 </script>
@@ -1456,8 +1664,116 @@ onMounted(() => {
   margin: 0;
   box-sizing: border-box;
   min-width: min-content;
-  cursor: default;
+  cursor: pointer;
   user-select: none;
+}
+
+.tag-label.active {
+  border-color: #00699A;
+  background: #E8F4FA;
+  color: #00699A;
+}
+
+.request-error {
+  margin: 8px 0 0;
+  color: #b42318;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  line-height: 1.45;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.action-button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(4px, 0.42vw, 8px);
+}
+
+.request-feedback {
+  width: 100%;
+  min-width: 0;
+}
+
+.field-errors {
+  padding-left: 20px;
+  margin-bottom: 0;
+}
+
+.has-error {
+  border-color: #b42318 !important;
+  box-shadow: 0 0 0 1px rgba(180, 35, 24, 0.12);
+}
+
+.recalculate-btn {
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 3px 8px;
+  border: 1px solid #00699A;
+  border-radius: 3px;
+  background: #F7FAFC;
+  color: #00699A;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.area-mode-hint {
+  display: block;
+  margin-top: 4px;
+  color: #5C5C5C;
+}
+
+.area-confirmation {
+  margin-top: 8px;
+  color: #8a4b08;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.area-confirmation label {
+  display: block;
+  margin-top: 4px;
+}
+
+.contact-time-picker {
+  min-width: 0;
+}
+
+.contact-time-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.contact-time-controls .form-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.contact-time-separator {
+  color: #5C5C5C;
+}
+
+.contact-time-display {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  color: #333333;
+  font-size: 12px;
+}
+
+.submit-btn:disabled,
+.draft-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 /* Contact Form */
@@ -1535,9 +1851,16 @@ input.dimension-input:not(:placeholder-shown) + .floating-label,
 /* Action Buttons */
 .action-buttons {
   display: flex;
-  gap: clamp(4px, 0.42vw, 8px);
-  justify-content: flex-start;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
   margin-top: 0;
+}
+
+.action-button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(4px, 0.42vw, 8px);
 }
 
 .submit-btn {

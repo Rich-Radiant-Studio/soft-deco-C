@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
+const api = await readFile(new URL('../src/api/checkout.ts', import.meta.url), 'utf8')
+const detail = await readFile(new URL('../src/views/ProductDetail.vue', import.meta.url), 'utf8')
+const view = await readFile(new URL('../src/views/CheckoutDraft.vue', import.meta.url), 'utf8')
+const routes = await readFile(new URL('../src/router/index.ts', import.meta.url), 'utf8')
+assert.ok(api.includes("request('/app/checkout/drafts', { method: 'POST'"), 'create uses checkout draft endpoint')
+assert.ok(api.includes('JSON.stringify({ goodsId: String(goodsId), skuId: String(skuId) })'), 'create sends actual goods and sku IDs only')
+assert.ok(api.includes('payload?.success === true || payload?.code === 0 || payload?.code === 200'), 'AjaxResult business success is checked')
+assert.ok(api.includes('Number.isSafeInteger(value)'), 'unsafe numeric int64 IDs are rejected')
+assert.ok(api.includes("'/app/checkout/drafts/' + encodeURIComponent(String(draftId))"), 'read uses exact encoded draft ID')
+assert.ok(detail.includes('createCheckoutDraft(goodsId, selectedSkuId.value)'), 'Buy Now uses actual product and selected SKU')
+assert.ok(detail.includes('creatingCheckout.value') && detail.includes("'/checkout/drafts/' + encodeURIComponent(draftId)"), 'duplicate clicks are blocked and real draft ID navigated')
+assert.ok(!/async function buyNow\(\)[\s\S]*?addCartItem/.test(detail), 'buy now is distinct from add-to-cart')
+assert.ok(view.includes('getCheckoutDraft(id)') && view.includes('draft.total') && view.includes('expired'), 'draft page reads actual draft fields and checks expiry')
+assert.ok(view.includes('Continue checkout unavailable'), 'no unsupported order placement is simulated')
+assert.ok(routes.includes("path: '/checkout/drafts/:draftId'"), 'draft route exists')
+console.log('PASS checkout contract assertions: endpoints, IDs, auth/business guard, no cart path, draft view/expiry, no fake order')
